@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:www.cocktailgames.com)",
+      "WebFetch(domain:cdn.1j1ju.com)",
+      "WebFetch(domain:officialgamerules.org)",
+      "WebFetch(domain:bghub.org)",
+      "WebFetch(domain:cdn.svc.asmodee.net)",
+      "WebFetch(domain:www.ultraboardgames.com)",
+      "WebFetch(domain:catanrules.com)",
+      "WebFetch(domain:ticket-to-ride.fandom.com)",
+      "WebFetch(domain:www.geekyhobbies.com)",
+      "WebFetch(domain:www.regledujeu.fr)",
+      "WebFetch(domain:ncdn0.daysofwonder.com)",
+      "WebFetch(domain:en.wikipedia.org)",
+      "WebFetch(domain:en.boardgamearena.com)",
+      "WebFetch(domain:www.catan.com)",
+      "WebFetch(domain:en.doc.boardgamearena.com)"
+    ]
+  }
+}
