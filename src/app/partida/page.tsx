@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { Player } from '@/domain/types';
 import type { Flip7Entry } from '@/domain/flip7/types';
@@ -20,14 +20,13 @@ function entrySummary(entry: Flip7Entry | undefined): string {
   return `${computeRoundScore(entry)} pts`;
 }
 
-export default function MatchPage() {
-  const params = useParams<{ id: string }>();
-  const id = params.id;
-  const match = useLiveQuery(() => getMatch(id), [id]);
+function MatchView() {
+  const searchParams = useSearchParams();
+  const id = searchParams.get('id') ?? '';
+  const match = useLiveQuery(() => (id ? getMatch(id) : undefined), [id]);
   const [editing, setEditing] = useState<EditTarget | null>(null);
 
-  if (match === undefined) return <p className="text-zinc-500">Carregando…</p>;
-  if (match === null) {
+  if (!id || match === null) {
     return (
       <p className="text-zinc-500">
         Partida não encontrada.{' '}
@@ -37,6 +36,7 @@ export default function MatchPage() {
       </p>
     );
   }
+  if (match === undefined) return <p className="text-zinc-500">Carregando…</p>;
 
   const m = match;
   const standings = computeStandings(toFlip7Match(m));
@@ -283,5 +283,13 @@ export default function MatchPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function MatchPage() {
+  return (
+    <Suspense fallback={<p className="text-zinc-500">Carregando…</p>}>
+      <MatchView />
+    </Suspense>
   );
 }

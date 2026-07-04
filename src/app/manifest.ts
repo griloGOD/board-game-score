@@ -1,5 +1,8 @@
 import type { MetadataRoute } from 'next';
 
+// Necessário com `output: 'export'` (gera o manifest como arquivo estático).
+export const dynamic = 'force-static';
+
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Board Game Score',

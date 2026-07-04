@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Board Game Score</string>
+    <string name="title_activity_main">Board Game Score</string>
+    <string name="package_name">com.grilogod.boardgamescore</string>
+    <string name="custom_url_scheme">com.grilogod.boardgamescore</string>
+</resources>
