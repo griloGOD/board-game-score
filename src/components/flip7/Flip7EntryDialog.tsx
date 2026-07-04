@@ -41,30 +41,31 @@ export function Flip7EntryDialog({ playerName, initial, onCancel, onConfirm }: P
       : { kind: 'calculated', numberCards: cards, hasX2, bonusModifiers: mods };
 
   const total = computeRoundScore(entry);
-  const chip = 'flex h-9 items-center justify-center rounded-lg text-sm font-medium';
+  const chip = 'flex h-10 items-center justify-center rounded-xl text-sm font-semibold transition';
+  const idle = 'bg-surface-2 text-ink hover:brightness-105';
   const isFlip7 = cards.length === MAX_CARDS;
 
   return (
     <div
-      className="fixed inset-0 z-20 flex items-end justify-center bg-black/50 sm:items-center"
+      className="fixed inset-0 z-40 flex items-end justify-center bg-black/50 sm:items-center sm:p-4"
       onClick={onCancel}
     >
       <div
-        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white p-4 shadow-xl dark:bg-zinc-900 sm:rounded-2xl"
+        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-3xl border border-border bg-surface p-4 shadow-2xl sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="font-semibold">{playerName}</h3>
+          <h3 className="font-display text-lg font-bold text-ink">{playerName}</h3>
           <div className="text-right">
-            <div className="text-xs text-zinc-500">Total da rodada</div>
-            <div className="text-2xl font-bold tabular-nums">{total}</div>
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted">Total</div>
+            <div className="font-display text-3xl font-extrabold tabular-nums text-ink">{total}</div>
           </div>
         </div>
 
         <button
           onClick={() => setBust((b) => !b)}
-          className={`mb-4 w-full rounded-lg border py-2 text-sm font-medium ${
-            bust ? 'border-red-500 bg-red-500 text-white' : 'border-zinc-300 dark:border-zinc-700'
+          className={`mb-4 w-full rounded-xl border py-2.5 text-sm font-semibold transition ${
+            bust ? 'border-danger bg-danger text-danger-fg' : 'border-border text-ink hover:bg-surface-2'
           }`}
         >
           Estourou (0 pontos)
@@ -72,16 +73,16 @@ export function Flip7EntryDialog({ playerName, initial, onCancel, onConfirm }: P
 
         {!bust && (
           <>
-            <div className="mb-4 flex rounded-lg bg-zinc-100 p-1 text-sm dark:bg-zinc-800">
+            <div className="mb-4 flex rounded-xl bg-surface-2 p-1 text-sm">
               <button
                 onClick={() => setMode('calc')}
-                className={`flex-1 rounded-md py-1.5 ${mode === 'calc' ? 'bg-white shadow dark:bg-zinc-700' : ''}`}
+                className={`flex-1 rounded-lg py-1.5 font-medium transition ${mode === 'calc' ? 'bg-bg text-ink shadow-sm' : 'text-muted'}`}
               >
                 Calcular
               </button>
               <button
                 onClick={() => setMode('manual')}
-                className={`flex-1 rounded-md py-1.5 ${mode === 'manual' ? 'bg-white shadow dark:bg-zinc-700' : ''}`}
+                className={`flex-1 rounded-lg py-1.5 font-medium transition ${mode === 'manual' ? 'bg-bg text-ink shadow-sm' : 'text-muted'}`}
               >
                 Digitar total
               </button>
@@ -90,11 +91,9 @@ export function Flip7EntryDialog({ playerName, initial, onCancel, onConfirm }: P
             {mode === 'calc' ? (
               <div className="space-y-4">
                 <div>
-                  <div className="mb-1 flex items-center justify-between text-xs text-zinc-500">
+                  <div className="mb-1.5 flex items-center justify-between text-[11px] font-semibold text-muted">
                     <span>Cartas de número</span>
-                    <span>
-                      {cards.length}/{MAX_CARDS}
-                    </span>
+                    <span>{cards.length}/{MAX_CARDS}</span>
                   </div>
                   <div className="grid grid-cols-7 gap-1.5">
                     {NUMBER_CARDS.map((n) => {
@@ -105,9 +104,7 @@ export function Flip7EntryDialog({ playerName, initial, onCancel, onConfirm }: P
                           key={n}
                           onClick={() => toggleCard(n)}
                           disabled={blocked}
-                          className={`${chip} ${
-                            selected ? 'bg-indigo-600 text-white' : 'bg-zinc-100 dark:bg-zinc-800'
-                          } ${blocked ? 'opacity-30' : ''}`}
+                          className={`${chip} ${selected ? 'bg-primary text-primary-fg' : idle} ${blocked ? 'opacity-25' : ''}`}
                         >
                           {n}
                         </button>
@@ -117,30 +114,30 @@ export function Flip7EntryDialog({ playerName, initial, onCancel, onConfirm }: P
                 </div>
 
                 {isFlip7 ? (
-                  <div className="rounded-lg border border-indigo-500 bg-indigo-50 py-2 text-center text-sm font-semibold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                  <div className="rounded-xl border border-accent bg-accent/15 py-2.5 text-center text-sm font-bold text-accent-fg">
                     🎉 Flip 7! +15 automático
                   </div>
                 ) : (
-                  <div className="text-center text-xs text-zinc-400">
+                  <div className="text-center text-xs text-muted">
                     faltam {MAX_CARDS - cards.length} carta(s) para o Flip 7 (+15)
                   </div>
                 )}
 
                 <div>
-                  <div className="mb-1 text-xs text-zinc-500">Modificadores</div>
+                  <div className="mb-1.5 text-[11px] font-semibold text-muted">Modificadores</div>
                   <div className="grid grid-cols-6 gap-1.5">
                     {FLAT_MODS.map((mod) => (
                       <button
                         key={mod}
                         onClick={() => toggleMod(mod)}
-                        className={`${chip} ${mods.includes(mod) ? 'bg-emerald-600 text-white' : 'bg-zinc-100 dark:bg-zinc-800'}`}
+                        className={`${chip} ${mods.includes(mod) ? 'bg-ink text-bg' : idle}`}
                       >
                         +{mod}
                       </button>
                     ))}
                     <button
                       onClick={() => setHasX2((x) => !x)}
-                      className={`${chip} ${hasX2 ? 'bg-amber-500 text-white' : 'bg-zinc-100 dark:bg-zinc-800'}`}
+                      className={`${chip} ${hasX2 ? 'bg-accent text-accent-fg' : idle}`}
                     >
                       ×2
                     </button>
@@ -149,13 +146,13 @@ export function Flip7EntryDialog({ playerName, initial, onCancel, onConfirm }: P
               </div>
             ) : (
               <div>
-                <div className="mb-1 text-xs text-zinc-500">Total da rodada</div>
+                <div className="mb-1.5 text-[11px] font-semibold text-muted">Total da rodada</div>
                 <input
                   type="number"
                   min={0}
                   value={manualTotal}
                   onChange={(e) => setManualTotal(Math.max(0, Number(e.target.value) || 0))}
-                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-950"
+                  className="w-full rounded-xl border border-border bg-bg px-3 py-2.5 text-ink outline-none focus:border-primary"
                   autoFocus
                 />
               </div>
@@ -166,13 +163,13 @@ export function Flip7EntryDialog({ playerName, initial, onCancel, onConfirm }: P
         <div className="mt-5 flex gap-2">
           <button
             onClick={onCancel}
-            className="flex-1 rounded-lg border border-zinc-300 py-2.5 text-sm font-medium dark:border-zinc-700"
+            className="flex-1 rounded-xl border border-border py-2.5 text-sm font-semibold text-ink transition hover:bg-surface-2"
           >
             Cancelar
           </button>
           <button
             onClick={() => onConfirm(entry)}
-            className="flex-1 rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white"
+            className="flex-1 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-fg transition hover:brightness-105"
           >
             Confirmar
           </button>

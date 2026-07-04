@@ -9,9 +9,9 @@ import type { Flip7Entry } from '@/domain/flip7/types';
 import type { MatchRecord } from '@/lib/db';
 import { getMatch, saveMatch, toFlip7Match } from '@/lib/repo';
 import { computeStandings, computeRoundScore, isGameOver } from '@/domain/flip7/scoring';
+import { Avatar } from '@/components/Avatar';
 import { Flip7EntryDialog } from '@/components/flip7/Flip7EntryDialog';
 
-/** Alvo da edição: a rodada atual ('draft') ou uma rodada já fechada (índice). */
 type EditTarget = { pid: string; round: number | 'draft' };
 
 function entrySummary(entry: Flip7Entry | undefined): string {
@@ -28,15 +28,15 @@ function MatchView() {
 
   if (!id || match === null) {
     return (
-      <p className="text-zinc-500">
+      <p className="text-muted">
         Partida não encontrada.{' '}
-        <Link href="/" className="text-indigo-600 underline">
+        <Link href="/" className="text-primary underline">
           Início
         </Link>
       </p>
     );
   }
-  if (match === undefined) return <p className="text-zinc-500">Carregando…</p>;
+  if (match === undefined) return <p className="text-muted">Carregando…</p>;
 
   const m = match;
   const standings = computeStandings(toFlip7Match(m));
@@ -48,12 +48,11 @@ function MatchView() {
   const playerById = new Map<string, Player>(m.players.map((p) => [p.id, p]));
   const totalById = new Map<string, number>(standings.map((s) => [s.playerId, s.total]));
   const champions = m.championIds.map((cid) => playerById.get(cid)).filter((p): p is Player => !!p);
+  const leader = standings[0]?.total ?? 0;
 
-  /** Aplica uma entrada (na rodada atual ou numa fechada) e recalcula o fim/campeão. */
   async function applyEntry(target: EditTarget, entry: Flip7Entry) {
     let rounds = m.rounds;
     let draftRound = m.draftRound;
-
     if (target.round === 'draft') {
       draftRound = { entries: { ...m.draftRound.entries, [target.pid]: entry } };
     } else {
@@ -61,21 +60,12 @@ function MatchView() {
         i === target.round ? { entries: { ...r.entries, [target.pid]: entry } } : r,
       );
     }
-
     const view = { playerIds: m.playerIds, rounds, targetScore: m.targetScore };
     const over = isGameOver(view);
     const championIds = over
       ? computeStandings(view).filter((s) => s.isChampion).map((s) => s.playerId)
       : [];
-
-    const updated: MatchRecord = {
-      ...m,
-      rounds,
-      draftRound,
-      status: over ? 'finalizada' : 'em_andamento',
-      championIds,
-    };
-    await saveMatch(updated);
+    await saveMatch({ ...m, rounds, draftRound, status: over ? 'finalizada' : 'em_andamento', championIds });
     setEditing(null);
   }
 
@@ -87,14 +77,13 @@ function MatchView() {
     const championIds = over
       ? computeStandings(view).filter((s) => s.isChampion).map((s) => s.playerId)
       : [];
-    const updated: MatchRecord = {
+    await saveMatch({
       ...m,
       rounds,
       draftRound: { entries: {} },
       status: over ? 'finalizada' : 'em_andamento',
       championIds,
-    };
-    await saveMatch(updated);
+    });
   }
 
   const editingEntry: Flip7Entry | undefined =
@@ -106,27 +95,25 @@ function MatchView() {
 
   return (
     <div className="pb-28">
-      {/* Cabeçalho */}
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">Flip 7</h1>
-          <p className="text-sm text-zinc-500">
+          <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">Flip 7</h1>
+          <p className="text-sm text-muted">
             {finished ? 'Partida encerrada' : `Rodada ${roundNumber}`} · meta {m.targetScore}
           </p>
         </div>
-        <Link href="/" className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">
+        <Link href="/" className="text-sm font-medium text-muted transition-colors hover:text-ink">
           Sair
         </Link>
       </div>
 
-      {/* Campeão */}
       {finished && champions.length > 0 && (
-        <div className="mb-6 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 p-5 text-center text-white shadow">
-          <div className="text-4xl">🏆</div>
-          <div className="mt-1 text-xs uppercase tracking-wide opacity-90">
+        <div className="animate-pop-in mb-6 overflow-hidden rounded-3xl bg-accent p-6 text-center text-accent-fg shadow-lg">
+          <div className="text-5xl">🏆</div>
+          <div className="mt-1 text-xs font-bold uppercase tracking-widest opacity-80">
             {champions.length > 1 ? 'Co-campeões' : 'Campeão'}
           </div>
-          <div className="text-2xl font-bold">{champions.map((c) => c.name).join(' e ')}</div>
+          <div className="font-display text-3xl font-extrabold">{champions.map((c) => c.name).join(' e ')}</div>
         </div>
       )}
 
@@ -134,24 +121,27 @@ function MatchView() {
       <ol className="mb-6 flex flex-col gap-2">
         {standings.map((s) => {
           const p = playerById.get(s.playerId)!;
+          const pct = leader > 0 ? Math.round((s.total / leader) * 100) : 0;
           return (
             <li
               key={s.playerId}
-              className={`flex items-center gap-3 rounded-xl border p-3 ${
-                s.isChampion
-                  ? 'border-amber-400 bg-amber-50 dark:bg-amber-950/30'
-                  : 'border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900'
+              className={`relative flex items-center gap-3 overflow-hidden rounded-2xl border p-3 ${
+                s.isChampion ? 'border-accent bg-accent/10' : 'border-border bg-surface'
               }`}
             >
-              <span className="w-5 text-center text-sm font-semibold text-zinc-400">{s.rank}</span>
-              <span
-                className="flex h-9 w-9 items-center justify-center rounded-full text-lg"
-                style={{ backgroundColor: p.color + '33' }}
-              >
-                {p.avatar}
+              {!finished && (
+                <span
+                  className="pointer-events-none absolute inset-y-0 left-0 bg-primary/8"
+                  style={{ width: `${pct}%` }}
+                  aria-hidden
+                />
+              )}
+              <span className="relative z-10 w-5 text-center text-sm font-bold text-muted">{s.rank}</span>
+              <span className="relative z-10">
+                <Avatar emoji={p.avatar} color={p.color} />
               </span>
-              <span className="flex-1 font-medium">{p.name}</span>
-              <span className="text-xl font-bold tabular-nums">{s.total}</span>
+              <span className="relative z-10 flex-1 font-semibold text-ink">{p.name}</span>
+              <span className="relative z-10 font-display text-xl font-extrabold tabular-nums text-ink">{s.total}</span>
             </li>
           );
         })}
@@ -160,31 +150,25 @@ function MatchView() {
       {/* Rodada atual */}
       {!finished && (
         <section className="mb-6">
-          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-zinc-500">
-            Rodada {roundNumber}
-          </h2>
+          <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted">Rodada {roundNumber}</h2>
           <ul className="flex flex-col gap-2">
             {m.players.map((p) => {
               const entry = draft[p.id];
               const done = p.id in draft;
               return (
-                <li
-                  key={p.id}
-                  className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-900"
-                >
-                  <span
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-base"
-                    style={{ backgroundColor: p.color + '33' }}
-                  >
-                    {p.avatar}
-                  </span>
-                  <span className="flex-1 text-sm font-medium">{p.name}</span>
-                  <span className={`text-sm tabular-nums ${done ? 'font-semibold' : 'text-zinc-400'}`}>
+                <li key={p.id} className="flex items-center gap-3 rounded-xl border border-border bg-surface p-2">
+                  <Avatar emoji={p.avatar} color={p.color} size="sm" />
+                  <span className="flex-1 text-sm font-medium text-ink">{p.name}</span>
+                  <span className={`text-sm tabular-nums ${done ? 'font-semibold text-ink' : 'text-muted'}`}>
                     {entrySummary(entry)}
                   </span>
                   <button
                     onClick={() => setEditing({ pid: p.id, round: 'draft' })}
-                    className="rounded-md bg-zinc-100 px-3 py-1 text-sm font-medium dark:bg-zinc-800"
+                    className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
+                      done
+                        ? 'bg-surface-2 text-muted hover:text-ink'
+                        : 'bg-primary text-primary-fg hover:brightness-105'
+                    }`}
                   >
                     {done ? 'Editar' : 'Lançar'}
                   </button>
@@ -195,42 +179,42 @@ function MatchView() {
         </section>
       )}
 
-      {/* Histórico de rodadas (editável) */}
+      {/* Histórico de rodadas */}
       {m.rounds.length > 0 && (
-        <details className="mb-6">
-          <summary className="cursor-pointer text-sm font-semibold uppercase tracking-wide text-zinc-500">
-            Histórico de rodadas ({m.rounds.length}) · toque para editar
+        <details className="mb-6 rounded-xl border border-border bg-surface p-3">
+          <summary className="cursor-pointer text-xs font-bold uppercase tracking-wider text-muted">
+            Rodadas ({m.rounds.length}) · toque para editar
           </summary>
-          <div className="mt-2 overflow-x-auto">
+          <div className="mt-3 overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-zinc-500">
-                  <th className="p-1 text-left font-medium">Jogador</th>
+                <tr className="text-muted">
+                  <th className="p-1 text-left font-semibold">Jogador</th>
                   {m.rounds.map((_, i) => (
-                    <th key={i} className="p-1 text-center font-medium">
+                    <th key={i} className="p-1 text-center font-semibold">
                       R{i + 1}
                     </th>
                   ))}
-                  <th className="p-1 text-center font-medium">Total</th>
+                  <th className="p-1 text-center font-semibold">Total</th>
                 </tr>
               </thead>
               <tbody>
                 {m.players.map((p) => (
-                  <tr key={p.id} className="border-t border-zinc-100 dark:border-zinc-800">
-                    <td className="whitespace-nowrap p-1">
+                  <tr key={p.id} className="border-t border-border">
+                    <td className="whitespace-nowrap p-1 text-ink">
                       {p.avatar} {p.name}
                     </td>
                     {m.rounds.map((r, i) => (
                       <td key={i} className="p-1 text-center">
                         <button
                           onClick={() => setEditing({ pid: p.id, round: i })}
-                          className="w-full rounded px-1 tabular-nums text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                          className="w-full rounded px-1 tabular-nums text-muted transition-colors hover:bg-surface-2 hover:text-ink"
                         >
                           {r.entries[p.id] ? computeRoundScore(r.entries[p.id]) : '–'}
                         </button>
                       </td>
                     ))}
-                    <td className="p-1 text-center font-semibold tabular-nums">{totalById.get(p.id)}</td>
+                    <td className="p-1 text-center font-bold tabular-nums text-ink">{totalById.get(p.id)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -240,39 +224,39 @@ function MatchView() {
       )}
 
       {/* Ação inferior */}
-      {!finished ? (
-        <div className="fixed inset-x-0 bottom-0 border-t border-zinc-200 bg-white/90 p-4 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/90">
-          <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
-            <span className="text-sm text-zinc-500">
-              {allEntered ? 'Todos lançaram' : 'Faltam jogadores lançar'}
-            </span>
-            <button
-              onClick={closeRound}
-              disabled={!allEntered}
-              className="rounded-lg bg-indigo-600 px-6 py-2.5 font-medium text-white disabled:opacity-40"
-            >
-              Fechar rodada
-            </button>
-          </div>
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-bg/90 p-4 backdrop-blur-md">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
+          {!finished ? (
+            <>
+              <span className="text-sm text-muted">
+                {allEntered ? '✓ Todos lançaram' : 'Faltam jogadores lançar'}
+              </span>
+              <button
+                onClick={closeRound}
+                disabled={!allEntered}
+                className="rounded-xl bg-primary px-6 py-2.5 font-semibold text-primary-fg transition hover:brightness-105 disabled:opacity-40"
+              >
+                Fechar rodada
+              </button>
+            </>
+          ) : (
+            <div className="flex w-full items-center justify-end gap-2">
+              <Link
+                href="/historico"
+                className="rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-surface"
+              >
+                Ranking
+              </Link>
+              <Link
+                href="/novo/flip7"
+                className="rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-fg transition hover:brightness-105"
+              >
+                Nova partida
+              </Link>
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="fixed inset-x-0 bottom-0 border-t border-zinc-200 bg-white/90 p-4 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/90">
-          <div className="mx-auto flex max-w-3xl items-center justify-end gap-2">
-            <Link
-              href="/historico"
-              className="rounded-lg border border-zinc-300 px-4 py-2.5 text-sm font-medium dark:border-zinc-700"
-            >
-              Ranking
-            </Link>
-            <Link
-              href="/novo/flip7"
-              className="rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-medium text-white"
-            >
-              Nova partida
-            </Link>
-          </div>
-        </div>
-      )}
+      </div>
 
       {editing !== null && (
         <Flip7EntryDialog
@@ -288,7 +272,7 @@ function MatchView() {
 
 export default function MatchPage() {
   return (
-    <Suspense fallback={<p className="text-zinc-500">Carregando…</p>}>
+    <Suspense fallback={<p className="text-muted">Carregando…</p>}>
       <MatchView />
     </Suspense>
   );

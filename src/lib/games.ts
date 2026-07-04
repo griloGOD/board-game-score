@@ -2,8 +2,8 @@
  * Catálogo de jogos.
  *
  * Fase 1: só o Flip 7 está jogável; os demais aparecem como "Em breve" para
- * prever a visão. As capas oficiais entram depois (por ora, cards com cor +
- * emoji como placeholder — é só trocar por um arquivo de imagem por jogo).
+ * prever a visão. Capas oficiais do BoardGameGeek em /public/games (uso pessoal);
+ * se faltar a capa, o card cai para o emoji + cor de destaque.
  */
 
 export type EngineKind = 'flip7';
@@ -11,10 +11,12 @@ export type EngineKind = 'flip7';
 export interface GameInfo {
   id: string;
   name: string;
-  /** Emoji do card placeholder (até termos as capas). */
+  /** Emoji do card placeholder (fallback quando não há capa). */
   emoji: string;
   /** Cor de destaque do card placeholder. */
   accent: string;
+  /** Caminho da capa em /public (ex.: /games/flip7.jpg). Opcional. */
+  cover?: string;
   minPlayers: number;
   maxPlayers: number;
   /** false = "Em breve" (ainda não jogável na Fase 1). */
@@ -24,14 +26,14 @@ export interface GameInfo {
 }
 
 export const GAMES: GameInfo[] = [
-  { id: 'flip7', name: 'Flip 7', emoji: '🃏', accent: '#6366f1', minPlayers: 3, maxPlayers: 18, available: true, engine: 'flip7' },
-  { id: 'catan', name: 'Catan', emoji: '🎲', accent: '#f97316', minPlayers: 3, maxPlayers: 4, available: false, engine: null },
-  { id: 'bang-dice', name: 'Bang! Dice', emoji: '🤠', accent: '#ef4444', minPlayers: 3, maxPlayers: 8, available: false, engine: null },
-  { id: 'trio', name: 'Trio', emoji: '🔢', accent: '#14b8a6', minPlayers: 3, maxPlayers: 6, available: false, engine: null },
-  { id: 'ticket-to-ride', name: 'Ticket to Ride', emoji: '🚂', accent: '#3b82f6', minPlayers: 2, maxPlayers: 5, available: false, engine: null },
-  { id: 'survive', name: 'Survive', emoji: '🌋', accent: '#f59e0b', minPlayers: 2, maxPlayers: 4, available: false, engine: null },
-  { id: 'dixit', name: 'Dixit', emoji: '🐰', accent: '#a855f7', minPlayers: 3, maxPlayers: 6, available: false, engine: null },
-  { id: 'azul', name: 'Azul', emoji: '🔷', accent: '#0ea5e9', minPlayers: 2, maxPlayers: 4, available: false, engine: null },
+  { id: 'flip7', name: 'Flip 7', emoji: '🃏', accent: '#6366f1', cover: '/games/flip7.jpg', minPlayers: 3, maxPlayers: 18, available: true, engine: 'flip7' },
+  { id: 'catan', name: 'Catan', emoji: '🎲', accent: '#f97316', cover: '/games/catan.png', minPlayers: 3, maxPlayers: 4, available: false, engine: null },
+  { id: 'bang-dice', name: 'Bang! Dice', emoji: '🤠', accent: '#ef4444', cover: '/games/bang-dice.jpg', minPlayers: 3, maxPlayers: 8, available: false, engine: null },
+  { id: 'trio', name: 'Trio', emoji: '🔢', accent: '#14b8a6', cover: '/games/trio.jpg', minPlayers: 3, maxPlayers: 6, available: false, engine: null },
+  { id: 'ticket-to-ride', name: 'Ticket to Ride', emoji: '🚂', accent: '#3b82f6', cover: '/games/ticket-to-ride.jpg', minPlayers: 2, maxPlayers: 5, available: false, engine: null },
+  { id: 'survive', name: 'Survive', emoji: '🌋', accent: '#f59e0b', cover: '/games/survive.png', minPlayers: 2, maxPlayers: 4, available: false, engine: null },
+  { id: 'dixit', name: 'Dixit', emoji: '🐰', accent: '#a855f7', cover: '/games/dixit.jpg', minPlayers: 3, maxPlayers: 6, available: false, engine: null },
+  { id: 'azul', name: 'Azul', emoji: '🔷', accent: '#0ea5e9', cover: '/games/azul.png', minPlayers: 2, maxPlayers: 4, available: false, engine: null },
 ];
 
 export function getGame(id: string): GameInfo | undefined {

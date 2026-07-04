@@ -5,6 +5,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { listFinishedMatches, toFlip7Match, deleteMatch } from '@/lib/repo';
 import { computeStandings } from '@/domain/flip7/scoring';
 import { computeFlip7Ranking, type FinishedFlip7Match } from '@/domain/flip7/ranking';
+import { Avatar } from '@/components/Avatar';
 
 function formatDate(ts: number): string {
   return new Date(ts).toLocaleDateString('pt-BR', {
@@ -17,7 +18,7 @@ function formatDate(ts: number): string {
 export default function HistoricoPage() {
   const matches = useLiveQuery(() => listFinishedMatches('flip7'), []);
 
-  if (matches === undefined) return <p className="text-zinc-500">Carregando…</p>;
+  if (matches === undefined) return <p className="text-muted">Carregando…</p>;
 
   const finished: FinishedFlip7Match[] = matches.map((m) => {
     const standings = computeStandings(toFlip7Match(m));
@@ -31,84 +32,78 @@ export default function HistoricoPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold tracking-tight">Histórico &amp; ranking</h1>
-      <p className="mt-1 mb-6 text-sm text-zinc-500 dark:text-zinc-400">Flip 7 · neste aparelho</p>
+      <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">Ranking</h1>
+      <p className="mt-1 mb-6 text-sm text-muted">Flip 7 · neste aparelho</p>
 
       {matches.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-zinc-300 p-6 text-center text-sm text-zinc-500 dark:border-zinc-700">
-          Nenhuma partida finalizada ainda.
-          <div className="mt-3">
-            <Link href="/novo/flip7" className="inline-block rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white">
-              Jogar Flip 7
-            </Link>
-          </div>
+        <div className="rounded-2xl border border-dashed border-border p-8 text-center">
+          <div className="text-4xl">🏆</div>
+          <p className="mt-2 text-sm text-muted">Nenhuma partida finalizada ainda.</p>
+          <Link
+            href="/novo/flip7"
+            className="mt-4 inline-block rounded-xl bg-primary px-5 py-2.5 font-semibold text-primary-fg transition hover:brightness-105"
+          >
+            Jogar Flip 7
+          </Link>
         </div>
       ) : (
         <>
-          <section className="mb-8">
-            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-zinc-500">Ranking</h2>
-            <ol className="flex flex-col gap-2">
-              {ranking.map((row, i) => (
-                <li
-                  key={row.player.id}
-                  className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900"
-                >
-                  <span className="w-5 text-center text-sm font-semibold text-zinc-400">{i + 1}</span>
-                  <span
-                    className="flex h-9 w-9 items-center justify-center rounded-full text-lg"
-                    style={{ backgroundColor: row.player.color + '33' }}
-                  >
-                    {row.player.avatar}
-                  </span>
-                  <div className="flex-1">
-                    <div className="font-medium">{row.player.name}</div>
-                    <div className="text-xs text-zinc-500">
-                      {row.matchesPlayed} partida(s) · melhor {row.bestScore}
-                    </div>
+          <ol className="mb-8 flex flex-col gap-2">
+            {ranking.map((row, i) => (
+              <li
+                key={row.player.id}
+                className={`flex items-center gap-3 rounded-2xl border p-3 ${
+                  i === 0 ? 'border-accent bg-accent/10' : 'border-border bg-surface'
+                }`}
+              >
+                <span className="w-6 text-center text-lg">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : <span className="text-sm font-bold text-muted">{i + 1}</span>}</span>
+                <Avatar emoji={row.player.avatar} color={row.player.color} />
+                <div className="flex-1">
+                  <div className="font-semibold text-ink">{row.player.name}</div>
+                  <div className="text-xs text-muted">
+                    {row.matchesPlayed} partida(s) · melhor {row.bestScore}
                   </div>
-                  <div className="text-right">
-                    <div className="text-xl font-bold tabular-nums">{row.wins}</div>
-                    <div className="text-xs text-zinc-500">vitória(s)</div>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </section>
+                </div>
+                <div className="text-right">
+                  <div className="font-display text-2xl font-extrabold tabular-nums text-ink">{row.wins}</div>
+                  <div className="text-[11px] text-muted">{row.wins === 1 ? 'vitória' : 'vitórias'}</div>
+                </div>
+              </li>
+            ))}
+          </ol>
 
-          <section>
-            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-zinc-500">
-              Partidas ({matches.length})
-            </h2>
-            <ul className="flex flex-col gap-2">
-              {matches.map((m) => {
-                const champs = m.championIds
-                  .map((id) => m.players.find((p) => p.id === id)?.name)
-                  .filter(Boolean)
-                  .join(' e ');
-                return (
-                  <li
-                    key={m.id}
-                    className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900"
-                  >
-                    <span className="text-lg">🏆</span>
-                    <div className="flex-1">
-                      <div className="text-sm font-medium">{champs || '—'}</div>
-                      <div className="text-xs text-zinc-500">
-                        {formatDate(m.createdAt)} · {m.players.length} jogadores · {m.rounds.length} rodadas
-                      </div>
+          <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted">
+            Partidas ({matches.length})
+          </h2>
+          <ul className="flex flex-col gap-2">
+            {matches.map((m) => {
+              const champs = m.championIds
+                .map((id) => m.players.find((p) => p.id === id)?.name)
+                .filter(Boolean)
+                .join(' e ');
+              return (
+                <li
+                  key={m.id}
+                  className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3"
+                >
+                  <span className="text-lg">🏆</span>
+                  <div className="flex-1">
+                    <div className="text-sm font-semibold text-ink">{champs || '—'}</div>
+                    <div className="text-xs text-muted">
+                      {formatDate(m.createdAt)} · {m.players.length} jogadores · {m.rounds.length} rodadas
                     </div>
-                    <button
-                      onClick={() => void deleteMatch(m.id)}
-                      className="px-2 text-zinc-400 hover:text-red-500"
-                      aria-label="Apagar partida"
-                    >
-                      ✕
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
+                  </div>
+                  <button
+                    onClick={() => void deleteMatch(m.id)}
+                    className="grid h-8 w-8 place-items-center rounded-full text-muted transition-colors hover:bg-danger/10 hover:text-danger"
+                    aria-label="Apagar partida"
+                  >
+                    ✕
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
         </>
       )}
     </div>

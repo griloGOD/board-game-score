@@ -10,8 +10,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Placar dos seus jogos de tabuleiro — fiel a cada jogo.',
     start_url: '/',
     display: 'standalone',
-    background_color: '#0a0a0a',
-    theme_color: '#6366f1',
+    background_color: '#161311',
+    theme_color: '#dd6a45',
     lang: 'pt-BR',
     icons: [
       { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
