@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎲 Board Game Score
 
-## Getting Started
+Placar digital para os seus jogos de tabuleiro — **fiel a como cada jogo pontua**. Funciona no navegador (PWA instalável) e como app **Android**.
 
-First, run the development server:
+[![Baixar APK](https://img.shields.io/badge/⬇️_Baixar_APK-Android-dd6a45?style=for-the-badge&logo=android&logoColor=white)](https://github.com/griloGOD/board-game-score/releases/latest/download/app-debug.apk)
+
+> **Fase 1:** foco no **Flip 7**. Os demais jogos (Catan, Dixit, Ticket to Ride, Azul, Survive, Bang! Dice, Trio) entram em breve.
+
+## ✨ O que faz
+
+- 🎯 **Placar fiel do Flip 7** — soma das cartas, ×2, modificadores, **+15 automático ao virar 7 cartas**, fim aos 200, campeão / co-campeões.
+- 🧮 **Calculadora ou digitação** — o app faz as contas, ou você digita o total direto; e marca "estourou".
+- 👥 **Jogadores com avatar (qualquer emoji) + cor**, reaproveitáveis entre partidas.
+- 🏆 **Histórico e ranking local** — vitórias, melhor pontuação, nº de partidas.
+- 📱 **Offline** — tudo no próprio aparelho (IndexedDB); PWA instalável + APK Android.
+
+## 📲 Instalar
+
+- **Android (APK):** baixe o [`app-debug.apk` mais recente](https://github.com/griloGOD/board-game-score/releases/latest/download/app-debug.apk), abra no celular e instale (pode ser preciso permitir "fontes desconhecidas").
+- **Navegador (PWA):** abra o site publicado e use "Instalar app" / "Adicionar à tela inicial".
+
+## 🛠️ Rodar localmente
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev      # http://localhost:3000
+npm test         # testes do motor de pontuação
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Stack: **Next.js 16 + TypeScript + Tailwind v4**, dados locais em **Dexie/IndexedDB**, export estático e **Capacitor** para o APK.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🔨 Gerar o APK
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Passo a passo em **[docs/apk-build.md](docs/apk-build.md)**. Resumo:
 
-## Learn More
+```bash
+npm run build
+npx cap copy android
+# Windows: android\gradlew.bat assembleDebug
+```
 
-To learn more about Next.js, take a look at the following resources:
+## 📄 Documentação
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- [Especificação da Fase 1](docs/specs/2026-07-04-fase1-flip7-placar-local-design.md)
+- [Sistema de design](docs/design-system.md)
+- [Build do APK e deploy](docs/apk-build.md)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+As capas dos jogos são arte oficial do [BoardGameGeek](https://boardgamegeek.com), usadas aqui para fins pessoais.
