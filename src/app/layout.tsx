@@ -4,6 +4,7 @@ import './globals.css';
 import { AppHeader } from '@/components/AppHeader';
 import { BottomNav } from '@/components/BottomNav';
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
+import { BackButton } from '@/components/BackButton';
 
 const display = Bricolage_Grotesque({
   variable: '--font-bricolage',
@@ -40,6 +41,7 @@ export default function RootLayout({
         <main className="mx-auto w-full max-w-3xl flex-1 px-4 pt-6 pb-24">{children}</main>
         <BottomNav />
         <ServiceWorkerRegister />
+        <BackButton />
       </body>
     </html>
   );

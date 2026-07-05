@@ -49,7 +49,8 @@ export default function NewFlip7MatchPage() {
     if (!canStart || starting) return;
     setStarting(true);
     const id = await createFlip7Match(participants, target);
-    router.push(`/partida?id=${id}`);
+    // replace (não push) para que "voltar" da partida vá direto ao Início, sem passar pelo setup.
+    router.replace(`/partida?id=${id}`);
   }
 
   const availableSaved = savedPlayers.filter((sp) => !participants.some((p) => p.id === sp.id));
