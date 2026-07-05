@@ -6,10 +6,11 @@ import { useRouter } from 'next/navigation';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { Player } from '@/domain/types';
 import { AVATAR_PRESETS, COLOR_PRESETS, defaultAvatar, defaultColor, softColor } from '@/lib/presets';
-import { listPlayers, savePlayer, createFlip7Match, newId } from '@/lib/repo';
+import { listPlayers, savePlayer, deletePlayer, createFlip7Match, newId } from '@/lib/repo';
 import { getGame } from '@/lib/games';
 import { Avatar } from '@/components/Avatar';
 import { EmojiPicker } from '@/components/EmojiPicker';
+import { Dialog } from '@/components/Dialog';
 
 const FLIP7 = getGame('flip7')!;
 
@@ -24,6 +25,7 @@ export default function NewFlip7MatchPage() {
   const [target, setTarget] = useState(200);
   const [starting, setStarting] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [savedToDelete, setSavedToDelete] = useState<Player | null>(null);
 
   const count = participants.length;
   const canAdd = name.trim().length > 0;
@@ -117,7 +119,7 @@ export default function NewFlip7MatchPage() {
             >
               {avatar}
             </span>
-            <span className="absolute -bottom-1 -right-1 grid h-6 w-6 place-items-center rounded-full bg-primary text-xs text-primary-fg ring-2 ring-surface">
+            <span className="absolute -bottom-1 -right-1 grid h-6 w-6 place-items-center rounded-full bg-success text-xs text-success-fg ring-2 ring-surface">
               ✎
             </span>
           </button>
@@ -138,7 +140,7 @@ export default function NewFlip7MatchPage() {
                 key={a}
                 onClick={() => setAvatar(a)}
                 className={`grid h-9 w-9 place-items-center rounded-lg text-lg transition ${
-                  avatar === a ? 'bg-primary/15 ring-2 ring-primary' : 'bg-bg ring-1 ring-border hover:bg-surface-2'
+                  avatar === a ? 'bg-success/15 ring-2 ring-success' : 'bg-bg ring-1 ring-border hover:bg-surface-2'
                 }`}
               >
                 {a}
@@ -174,7 +176,7 @@ export default function NewFlip7MatchPage() {
         <button
           onClick={addNewPlayer}
           disabled={!canAdd}
-          className="mt-4 w-full rounded-xl bg-primary py-2.5 font-semibold text-primary-fg transition hover:brightness-105 disabled:opacity-40"
+          className="mt-4 w-full rounded-xl bg-success py-2.5 font-semibold text-success-fg transition hover:brightness-105 disabled:opacity-40"
         >
           Adicionar jogador
         </button>
@@ -186,15 +188,26 @@ export default function NewFlip7MatchPage() {
           <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted">Jogadores salvos</h2>
           <div className="flex flex-wrap gap-2">
             {availableSaved.map((p) => (
-              <button
+              <div
                 key={p.id}
-                onClick={() => addExisting(p)}
-                className="flex items-center gap-1.5 rounded-full border border-border bg-surface py-1 pl-1 pr-3 text-sm text-ink transition hover:border-primary"
+                className="flex items-center gap-0.5 rounded-full border border-border bg-surface py-1 pl-1 pr-1 text-sm text-ink"
               >
-                <Avatar emoji={p.avatar} color={p.color} size="sm" />
-                {p.name}
-                <span className="text-muted">＋</span>
-              </button>
+                <button
+                  onClick={() => addExisting(p)}
+                  className="flex items-center gap-1.5 pr-1 transition hover:text-success"
+                >
+                  <Avatar emoji={p.avatar} color={p.color} size="sm" />
+                  {p.name}
+                  <span className="text-muted">＋</span>
+                </button>
+                <button
+                  onClick={() => setSavedToDelete(p)}
+                  aria-label={`Apagar ${p.name}`}
+                  className="grid h-6 w-6 place-items-center rounded-full text-muted transition-colors hover:bg-danger/10 hover:text-danger"
+                >
+                  ✕
+                </button>
+              </div>
             ))}
           </div>
         </section>
@@ -222,7 +235,7 @@ export default function NewFlip7MatchPage() {
           <button
             onClick={start}
             disabled={!canStart || starting}
-            className="rounded-xl bg-primary px-6 py-2.5 font-semibold text-primary-fg transition hover:brightness-105 disabled:opacity-40"
+            className="rounded-xl bg-success px-6 py-2.5 font-semibold text-success-fg transition hover:brightness-105 disabled:opacity-40"
           >
             {starting ? 'Começando…' : 'Começar partida'}
           </button>
@@ -236,6 +249,25 @@ export default function NewFlip7MatchPage() {
             setPickerOpen(false);
           }}
           onClose={() => setPickerOpen(false)}
+        />
+      )}
+
+      {savedToDelete && (
+        <Dialog
+          title="Apagar jogador salvo?"
+          message={`"${savedToDelete.name}" sai da lista de salvos. As partidas antigas dele continuam no histórico.`}
+          onClose={() => setSavedToDelete(null)}
+          actions={[
+            {
+              label: 'Apagar',
+              variant: 'danger',
+              onClick: () => {
+                void deletePlayer(savedToDelete.id);
+                setSavedToDelete(null);
+              },
+            },
+            { label: 'Cancelar', variant: 'ghost', onClick: () => setSavedToDelete(null) },
+          ]}
         />
       )}
     </div>

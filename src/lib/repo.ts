@@ -23,6 +23,12 @@ export async function deletePlayer(id: string): Promise<void> {
 // ---- Partidas ----
 
 export async function createFlip7Match(players: Player[], targetScore = 200): Promise<string> {
+  // Só pode existir uma partida em andamento: apaga a anterior não finalizada.
+  const openIds = (await db.matches.where('status').equals('em_andamento').toArray())
+    .filter((m) => m.gameId === 'flip7')
+    .map((m) => m.id);
+  if (openIds.length) await db.matches.bulkDelete(openIds);
+
   const id = newId();
   const now = Date.now();
   const record: MatchRecord = {

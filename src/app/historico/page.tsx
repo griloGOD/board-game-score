@@ -64,7 +64,7 @@ export default function HistoricoPage() {
           <p className="mt-2 text-sm text-muted">Nenhuma partida finalizada ainda.</p>
           <Link
             href="/novo/flip7"
-            className="mt-4 inline-block rounded-xl bg-primary px-5 py-2.5 font-semibold text-primary-fg transition hover:brightness-105"
+            className="mt-4 inline-block rounded-xl bg-success px-5 py-2.5 font-semibold text-success-fg transition hover:brightness-105"
           >
             Jogar Flip 7
           </Link>

@@ -35,7 +35,7 @@ export function EmojiPicker({ onSelect, onClose }: Props) {
         previewPosition: 'none',
         skinTonePosition: 'search',
         dynamicWidth: true,
-        autoFocus: true,
+        autoFocus: false, // não abrir o teclado de texto; só ao tocar na busca
       });
       hostRef.current.appendChild(node as unknown as Node);
     })();

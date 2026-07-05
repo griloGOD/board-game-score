@@ -42,7 +42,7 @@ export function BottomNav() {
             <span className="relative text-lg" aria-hidden>
               ▶️
               {active && (
-                <span className="absolute -right-1.5 -top-0.5 h-2 w-2 rounded-full bg-primary ring-2 ring-bg" />
+                <span className="absolute -right-1.5 -top-0.5 h-2 w-2 rounded-full bg-success ring-2 ring-bg" />
               )}
             </span>
             Continuar

@@ -110,8 +110,8 @@ export function Flip7EntryDialog({ playerName, initial, onCancel, onConfirm }: P
                             aria-pressed={selected}
                             aria-label={`Carta ${n}`}
                             className={`relative aspect-[5/8] overflow-hidden rounded-md transition ${
-                              selected ? 'ring-2 ring-primary' : 'ring-1 ring-border'
-                            } ${blocked ? 'opacity-30' : 'hover:brightness-105'}`}
+                              selected ? 'ring-[3px] ring-success' : 'opacity-80 ring-1 ring-border'
+                            } ${blocked ? '!opacity-30' : 'hover:opacity-100'}`}
                           >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
@@ -120,7 +120,7 @@ export function Flip7EntryDialog({ playerName, initial, onCancel, onConfirm }: P
                               className="absolute inset-0 h-full w-full object-cover object-center"
                             />
                             {selected && (
-                              <span className="absolute right-0.5 top-0.5 grid h-4 w-4 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-fg shadow">
+                              <span className="absolute right-0.5 top-0.5 grid h-5 w-5 place-items-center rounded-full bg-success text-xs font-bold text-success-fg shadow-md ring-2 ring-surface">
                                 ✓
                               </span>
                             )}
@@ -188,7 +188,7 @@ export function Flip7EntryDialog({ playerName, initial, onCancel, onConfirm }: P
           </button>
           <button
             onClick={() => onConfirm(entry)}
-            className="flex-1 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-fg transition hover:brightness-105"
+            className="flex-1 rounded-xl bg-success py-2.5 text-sm font-semibold text-success-fg transition hover:brightness-105"
           >
             Confirmar
           </button>

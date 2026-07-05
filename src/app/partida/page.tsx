@@ -137,7 +137,7 @@ function MatchView() {
               {!finished && (
                 <div className="h-1.5 w-full bg-surface-2" aria-hidden>
                   <div
-                    className="h-full rounded-r-full bg-primary transition-all duration-300"
+                    className="h-full rounded-r-full bg-success transition-all duration-300"
                     style={{ width: `${pct}%` }}
                   />
                 </div>
@@ -167,7 +167,7 @@ function MatchView() {
                     className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
                       done
                         ? 'bg-surface-2 text-muted hover:text-ink'
-                        : 'bg-primary text-primary-fg hover:brightness-105'
+                        : 'bg-success text-success-fg hover:brightness-105'
                     }`}
                   >
                     {done ? 'Editar' : 'Lançar'}
@@ -234,7 +234,7 @@ function MatchView() {
               <button
                 onClick={closeRound}
                 disabled={!allEntered}
-                className="rounded-xl bg-primary px-6 py-2.5 font-semibold text-primary-fg transition hover:brightness-105 disabled:opacity-40"
+                className="rounded-xl bg-success px-6 py-2.5 font-semibold text-success-fg transition hover:brightness-105 disabled:opacity-40"
               >
                 Fechar rodada
               </button>
@@ -249,7 +249,7 @@ function MatchView() {
               </Link>
               <Link
                 href="/novo/flip7"
-                className="rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-fg transition hover:brightness-105"
+                className="rounded-xl bg-success px-6 py-2.5 text-sm font-semibold text-success-fg transition hover:brightness-105"
               >
                 Nova partida
               </Link>

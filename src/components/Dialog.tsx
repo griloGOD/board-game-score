@@ -15,7 +15,7 @@ interface Props {
 
 function actionClass(variant: DialogAction['variant']): string {
   const base = 'w-full rounded-xl py-2.5 text-sm font-semibold transition';
-  if (variant === 'primary') return `${base} bg-primary text-primary-fg hover:brightness-105`;
+  if (variant === 'primary') return `${base} bg-success text-success-fg hover:brightness-105`;
   if (variant === 'danger') return `${base} bg-danger text-danger-fg hover:brightness-105`;
   return `${base} border border-border text-ink hover:bg-surface-2`;
 }

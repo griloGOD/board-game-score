@@ -18,6 +18,8 @@
   --accent-fg: oklch(0.28 0.04 60);
   --danger: oklch(0.585 0.2 27);
   --danger-fg: oklch(0.99 0.01 30);
+  --success: oklch(0.62 0.16 150);
+  --success-fg: oklch(0.99 0.01 150);
   color-scheme: light;
 }
 
@@ -35,6 +37,8 @@
     --accent-fg: oklch(0.25 0.04 70);
     --danger: oklch(0.63 0.19 27);
     --danger-fg: oklch(0.99 0.01 30);
+    --success: oklch(0.67 0.16 150);
+    --success-fg: oklch(0.99 0.01 150);
     color-scheme: dark;
   }
 }
@@ -52,6 +56,8 @@
   --color-accent-fg: var(--accent-fg);
   --color-danger: var(--danger);
   --color-danger-fg: var(--danger-fg);
+  --color-success: var(--success);
+  --color-success-fg: var(--success-fg);
   --font-sans: var(--font-hanken);
   --font-display: var(--font-bricolage);
 }
