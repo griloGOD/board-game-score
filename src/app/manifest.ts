@@ -6,7 +6,7 @@ export const dynamic = 'force-static';
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Board Game Score',
-    short_name: 'BG Score',
+    short_name: 'Board Game Score',
     description: 'Placar dos seus jogos de tabuleiro — fiel a cada jogo.',
     start_url: '/',
     display: 'standalone',

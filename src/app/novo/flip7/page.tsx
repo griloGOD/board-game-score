@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { Player } from '@/domain/types';
-import { AVATAR_PRESETS, COLOR_PRESETS, defaultAvatar, defaultColor } from '@/lib/presets';
+import { AVATAR_PRESETS, COLOR_PRESETS, defaultAvatar, defaultColor, softColor } from '@/lib/presets';
 import { listPlayers, savePlayer, createFlip7Match, newId } from '@/lib/repo';
 import { getGame } from '@/lib/games';
 import { Avatar } from '@/components/Avatar';
@@ -112,7 +112,7 @@ export default function NewFlip7MatchPage() {
           >
             <span
               className="grid h-14 w-14 place-items-center rounded-2xl text-3xl"
-              style={{ backgroundColor: color + '2e' }}
+              style={{ backgroundColor: softColor(color) }}
             >
               {avatar}
             </span>
@@ -213,7 +213,7 @@ export default function NewFlip7MatchPage() {
       </section>
 
       {/* Começar */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-bg/90 p-4 backdrop-blur-md">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-bg/90 px-4 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-md">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
           <span className="text-sm text-muted">
             {canStart ? `${count} jogadores` : `Mínimo de ${FLIP7.minPlayers} jogadores`}

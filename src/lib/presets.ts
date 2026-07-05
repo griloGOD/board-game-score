@@ -34,3 +34,17 @@ export function defaultAvatar(index: number): string {
 export function defaultColor(index: number): string {
   return COLOR_PRESETS[index % COLOR_PRESETS.length];
 }
+
+/**
+ * Cor sólida (independente do tema) derivada da cor do jogador — um pastel claro.
+ * Usa `rgb()` opaco (não alpha) para que o avatar fique idêntico no claro e no
+ * escuro, sem se misturar com o fundo.
+ */
+export function softColor(hex: string): string {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  const mix = (c: number) => Math.round(c + (255 - c) * 0.72);
+  return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
+}

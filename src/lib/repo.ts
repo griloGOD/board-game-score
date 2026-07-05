@@ -68,3 +68,11 @@ export function toFlip7Match(record: MatchRecord): Flip7Match {
     targetScore: record.targetScore,
   };
 }
+
+/** A partida de Flip 7 em andamento mais recente (para o botão "Continuar"). */
+export async function getActiveFlip7Match(): Promise<MatchRecord | undefined> {
+  const inProgress = await db.matches.where('status').equals('em_andamento').toArray();
+  return inProgress
+    .filter((m) => m.gameId === 'flip7')
+    .sort((a, b) => b.updatedAt - a.updatedAt)[0];
+}

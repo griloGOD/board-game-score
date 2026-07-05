@@ -20,11 +20,12 @@ export const metadata: Metadata = {
   title: 'Board Game Score',
   description: 'Placar dos seus jogos de tabuleiro — fiel a cada jogo.',
   applicationName: 'Board Game Score',
-  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'BG Score' },
+  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Board Game Score' },
 };
 
 export const viewport: Viewport = {
   themeColor: '#dd6a45',
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({

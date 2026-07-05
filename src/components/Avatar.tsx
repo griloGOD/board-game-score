@@ -1,3 +1,5 @@
+import { softColor } from '@/lib/presets';
+
 interface Props {
   emoji: string;
   color: string;
@@ -10,12 +12,15 @@ const SIZES = {
   lg: 'h-11 w-11 text-xl',
 };
 
-/** Ficha do jogador: emoji num círculo tingido com a cor dele. */
+/**
+ * Ficha do jogador: emoji num círculo com a cor dele.
+ * A cor é sólida (via softColor) para ficar igual no tema claro e escuro.
+ */
 export function Avatar({ emoji, color, size = 'md' }: Props) {
   return (
     <span
       className={`grid shrink-0 place-items-center rounded-full ${SIZES[size]}`}
-      style={{ backgroundColor: color + '2e' }}
+      style={{ backgroundColor: softColor(color) }}
       aria-hidden
     >
       {emoji}
