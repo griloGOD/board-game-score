@@ -95,7 +95,7 @@ export function Flip7EntryDialog({ playerName, initial, onCancel, onConfirm }: P
                     <span>Cartas de número</span>
                     <span>{cards.length}/{MAX_CARDS}</span>
                   </div>
-                  <div className="grid grid-cols-7 gap-1.5">
+                  <div className="grid grid-cols-5 gap-2">
                     {NUMBER_CARDS.map((n) => {
                       const selected = cards.includes(n);
                       const blocked = !selected && cards.length >= MAX_CARDS;
@@ -104,9 +104,19 @@ export function Flip7EntryDialog({ playerName, initial, onCancel, onConfirm }: P
                           key={n}
                           onClick={() => toggleCard(n)}
                           disabled={blocked}
-                          className={`${chip} ${selected ? 'bg-primary text-primary-fg' : idle} ${blocked ? 'opacity-25' : ''}`}
+                          aria-pressed={selected}
+                          aria-label={`Carta ${n}`}
+                          className={`relative overflow-hidden rounded-xl bg-white transition ${
+                            selected ? 'ring-[3px] ring-primary' : 'ring-1 ring-border'
+                          } ${blocked ? 'opacity-30' : 'hover:-translate-y-0.5'}`}
                         >
-                          {n}
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={`/flip7cards/${n}.png`} alt="" className="block w-full" />
+                          {selected && (
+                            <span className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-primary text-[11px] font-bold text-primary-fg shadow">
+                              ✓
+                            </span>
+                          )}
                         </button>
                       );
                     })}

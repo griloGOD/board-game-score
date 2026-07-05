@@ -47,4 +47,4 @@ npx cap copy android
 
 ---
 
-As capas dos jogos são arte oficial do [BoardGameGeek](https://boardgamegeek.com), usadas aqui para fins pessoais.
+As imagens dos jogos (capas e as cartas do Flip 7) são arte oficial (via [BoardGameGeek](https://boardgamegeek.com) / The Op), usadas aqui para fins pessoais.
