@@ -19,8 +19,10 @@ describe('computeFlip7Ranking', () => {
     expect(byId.a.wins).toBe(1);
     expect(byId.a.matchesPlayed).toBe(2);
     expect(byId.a.bestScore).toBe(210);
+    expect(byId.a.totalPoints).toBe(330); // 210 + 120
     expect(byId.b.wins).toBe(1);
     expect(byId.b.bestScore).toBe(205);
+    expect(byId.b.totalPoints).toBe(355); // 150 + 205
   });
 
   it('dá uma vitória a cada co-campeão', () => {

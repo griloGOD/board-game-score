@@ -14,6 +14,8 @@ export interface Flip7RankRow {
   wins: number;
   matchesPlayed: number;
   bestScore: number;
+  /** Soma dos pontos do jogador em todas as partidas. */
+  totalPoints: number;
 }
 
 /**
@@ -28,9 +30,11 @@ export function computeFlip7Ranking(matches: FinishedFlip7Match[]): Flip7RankRow
   for (const m of matches) {
     for (const player of m.players) {
       const existing = rows.get(player.id);
-      const row = existing ?? { player, wins: 0, matchesPlayed: 0, bestScore: 0 };
+      const row = existing ?? { player, wins: 0, matchesPlayed: 0, bestScore: 0, totalPoints: 0 };
+      const pts = m.totals[player.id] ?? 0;
       row.matchesPlayed += 1;
-      row.bestScore = Math.max(row.bestScore, m.totals[player.id] ?? 0);
+      row.bestScore = Math.max(row.bestScore, pts);
+      row.totalPoints += pts;
       if (m.championIds.includes(player.id)) row.wins += 1;
       if (!existing) rows.set(player.id, row);
     }

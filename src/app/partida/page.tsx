@@ -48,7 +48,6 @@ function MatchView() {
   const playerById = new Map<string, Player>(m.players.map((p) => [p.id, p]));
   const totalById = new Map<string, number>(standings.map((s) => [s.playerId, s.total]));
   const champions = m.championIds.map((cid) => playerById.get(cid)).filter((p): p is Player => !!p);
-  const leader = standings[0]?.total ?? 0;
 
   async function applyEntry(target: EditTarget, entry: Flip7Entry) {
     let rounds = m.rounds;
@@ -121,27 +120,28 @@ function MatchView() {
       <ol className="mb-6 flex flex-col gap-2">
         {standings.map((s) => {
           const p = playerById.get(s.playerId)!;
-          const pct = leader > 0 ? Math.round((s.total / leader) * 100) : 0;
+          const pct = Math.min(100, Math.round((s.total / m.targetScore) * 100));
           return (
             <li
               key={s.playerId}
-              className={`relative flex items-center gap-3 overflow-hidden rounded-2xl border p-3 ${
+              className={`overflow-hidden rounded-2xl border ${
                 s.isChampion ? 'border-accent bg-accent/10' : 'border-border bg-surface'
               }`}
             >
-              {!finished && (
-                <span
-                  className="pointer-events-none absolute inset-y-0 left-0 bg-primary/8"
-                  style={{ width: `${pct}%` }}
-                  aria-hidden
-                />
-              )}
-              <span className="relative z-10 w-5 text-center text-sm font-bold text-muted">{s.rank}</span>
-              <span className="relative z-10">
+              <div className="flex items-center gap-3 p-3">
+                <span className="w-5 text-center text-sm font-bold text-muted">{s.rank}</span>
                 <Avatar emoji={p.avatar} color={p.color} />
-              </span>
-              <span className="relative z-10 flex-1 font-semibold text-ink">{p.name}</span>
-              <span className="relative z-10 font-display text-xl font-extrabold tabular-nums text-ink">{s.total}</span>
+                <span className="flex-1 font-semibold text-ink">{p.name}</span>
+                <span className="font-display text-xl font-extrabold tabular-nums text-ink">{s.total}</span>
+              </div>
+              {!finished && (
+                <div className="h-1.5 w-full bg-surface-2" aria-hidden>
+                  <div
+                    className="h-full rounded-r-full bg-primary transition-all duration-300"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+              )}
             </li>
           );
         })}
