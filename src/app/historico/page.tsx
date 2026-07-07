@@ -80,6 +80,8 @@ export default function HistoricoPage() {
   const ranking = [...computeRanking(finished)].sort(SORTERS[sort]);
 
   const filterName = gameFilter === 'all' ? 'Todos os jogos' : (getGame(gameFilter)?.name ?? gameFilter);
+  // "Pontos" só faz sentido dentro de um jogo — entre jogos as escalas são muito diferentes.
+  const sortTabs = gameFilter === 'all' ? SORT_TABS.filter((t) => t.key !== 'points') : SORT_TABS;
 
   return (
     <div>
@@ -91,7 +93,10 @@ export default function HistoricoPage() {
         {[{ id: 'all' as const, name: 'Geral' }, ...playableGames].map((g) => (
           <button
             key={g.id}
-            onClick={() => setGameFilter(g.id)}
+            onClick={() => {
+              setGameFilter(g.id);
+              if (g.id === 'all' && sort === 'points') setSort('wins');
+            }}
             className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
               gameFilter === g.id
                 ? 'bg-ink text-bg'
@@ -122,7 +127,7 @@ export default function HistoricoPage() {
         <>
           {/* Ordenação */}
           <div className="mb-4 flex rounded-xl bg-surface-2 p-1 text-sm">
-            {SORT_TABS.map((t) => (
+            {sortTabs.map((t) => (
               <button
                 key={t.key}
                 onClick={() => setSort(t.key)}
@@ -134,12 +139,6 @@ export default function HistoricoPage() {
               </button>
             ))}
           </div>
-
-          {gameFilter === 'all' && sort === 'points' && (
-            <p className="-mt-2 mb-3 text-[11px] text-muted">
-              No geral, os pontos somam escalas diferentes (ex.: ~200 por partida de Flip 7, ~10 de Catan).
-            </p>
-          )}
 
           <ol className="mb-8 flex flex-col gap-2">
             {ranking.map((row, i) => {
@@ -158,7 +157,8 @@ export default function HistoricoPage() {
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-semibold text-ink">{row.player.name}</div>
                     <div className="text-[11px] text-muted">
-                      {row.matchesPlayed} jogos · {row.wins} vit · {Math.round(winRate(row) * 100)}% · {row.totalPoints} pts
+                      {row.matchesPlayed} jogos · {row.wins} vit · {Math.round(winRate(row) * 100)}%
+                      {gameFilter !== 'all' && ` · ${row.totalPoints} pts`}
                     </div>
                   </div>
                   <div className="text-right">
@@ -181,19 +181,28 @@ export default function HistoricoPage() {
                 .join(' e ');
               const gameName = getGame(m.gameId)?.name ?? m.gameId;
               return (
-                <li key={m.id} className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3">
-                  <span className="text-lg">🏆</span>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold text-ink">{champs || '—'}</div>
-                    <div className="text-xs text-muted">
-                      {formatDate(m.createdAt)}
-                      {gameFilter === 'all' && ` · ${gameName}`} · {m.players.length} jogadores ·{' '}
-                      {matchDetail(m, totals)}
+                <li key={m.id} className="flex items-center gap-1 rounded-xl border border-border bg-surface p-2">
+                  <Link
+                    href={`/partida?id=${m.id}`}
+                    aria-label="Ver o placar final desta partida"
+                    className="flex min-w-0 flex-1 items-center gap-3 rounded-lg p-1 transition-colors hover:bg-surface-2"
+                  >
+                    <span className="text-lg">🏆</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-semibold text-ink">{champs || '—'}</div>
+                      <div className="text-xs text-muted">
+                        {formatDate(m.createdAt)}
+                        {gameFilter === 'all' && ` · ${gameName}`} · {m.players.length} jogadores ·{' '}
+                        {matchDetail(m, totals)}
+                      </div>
                     </div>
-                  </div>
+                    <span className="pr-1 text-lg text-muted" aria-hidden>
+                      ›
+                    </span>
+                  </Link>
                   <button
                     onClick={() => setToDelete(m)}
-                    className="grid h-8 w-8 place-items-center rounded-full text-muted transition-colors hover:bg-danger/10 hover:text-danger"
+                    className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-danger/10 hover:text-danger"
                     aria-label="Apagar partida"
                   >
                     🗑️
