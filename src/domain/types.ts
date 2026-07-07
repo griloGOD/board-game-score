@@ -15,3 +15,13 @@ export interface Player {
   /** Token de cor da paleta, para diferenciar o jogador. */
   color: string;
 }
+
+/** A posição de um jogador na classificação de uma partida (qualquer jogo). */
+export interface Standing {
+  playerId: string;
+  total: number;
+  /** Rank começando em 1; jogadores empatados compartilham o mesmo rank. */
+  rank: number;
+  /** True somente quando a partida terminou e este jogador é (co-)campeão. */
+  isChampion: boolean;
+}

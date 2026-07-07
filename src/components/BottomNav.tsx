@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { getActiveFlip7Match } from '@/lib/repo';
+import { getActiveMatch } from '@/lib/repo';
 import { Dialog } from '@/components/Dialog';
 
 function tabClass(active: boolean): string {
@@ -16,7 +16,7 @@ function tabClass(active: boolean): string {
 export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const active = useLiveQuery(() => getActiveFlip7Match(), []);
+  const active = useLiveQuery(() => getActiveMatch(), []);
   const [noGame, setNoGame] = useState(false);
 
   // Esconde durante os fluxos de partida/config (que têm barra de ação própria).

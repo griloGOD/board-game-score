@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { GAMES } from '@/lib/games';
-import { getActiveFlip7Match } from '@/lib/repo';
+import { GAMES, getGame } from '@/lib/games';
+import { getActiveMatch } from '@/lib/repo';
 import { Dialog } from '@/components/Dialog';
 
 export function GameGrid() {
   const router = useRouter();
-  const active = useLiveQuery(() => getActiveFlip7Match(), []);
+  const active = useLiveQuery(() => getActiveMatch(), []);
   const [confirmGame, setConfirmGame] = useState<string | null>(null);
 
   function pick(gameId: string) {
@@ -76,7 +76,7 @@ export function GameGrid() {
       {confirmGame && active && (
         <Dialog
           title="Partida em andamento"
-          message="Você tem uma partida do Flip 7 que ainda não terminou. O que deseja fazer?"
+          message={`Você tem uma partida de ${getGame(active.gameId)?.name ?? 'outro jogo'} que ainda não terminou. Criar uma nova apaga a atual.`}
           onClose={() => setConfirmGame(null)}
           actions={[
             {

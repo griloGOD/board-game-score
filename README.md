@@ -4,14 +4,15 @@ Placar digital para os seus jogos de tabuleiro — **fiel a como cada jogo pontu
 
 [![Baixar APK](https://img.shields.io/badge/⬇️_Baixar_APK-Android-dd6a45?style=for-the-badge&logo=android&logoColor=white)](https://github.com/griloGOD/board-game-score/releases/latest/download/app-debug.apk)
 
-> **Fase 1:** foco no **Flip 7**. Os demais jogos (Catan, Dixit, Ticket to Ride, Azul, Survive, Bang! Dice, Trio) entram em breve.
+> **Jogáveis:** **Flip 7** e **Catan**. Os demais (Dixit, Ticket to Ride, Azul, Survive, Bang! Dice, Trio) entram em breve.
 
 ## ✨ O que faz
 
 - 🎯 **Placar fiel do Flip 7** — soma das cartas, ×2, modificadores, **+15 automático ao virar 7 cartas**, fim aos 200, campeão / co-campeões.
+- 🏝️ **Placar fiel do Catan** — povoados ×1, cidades ×2 (substituem povoado), cartas de PV, **Estrada Mais Longa / Maior Exército** (+2, passam de mão), corrida até 10 PV com vitória **declarada** como no jogo.
 - 🧮 **Calculadora ou digitação** — o app faz as contas, ou você digita o total direto; e marca "estourou".
-- 👥 **Jogadores com avatar (qualquer emoji) + cor**, reaproveitáveis entre partidas.
-- 🏆 **Histórico e ranking local** — vitórias, melhor pontuação, nº de partidas.
+- 👥 **Jogadores com avatar (qualquer emoji) + cor**, reaproveitáveis entre partidas e entre jogos.
+- 🏆 **Ranking local por jogo e geral** — vitórias, aproveitamento e pontos, com histórico de partidas.
 - 📱 **Offline** — tudo no próprio aparelho (IndexedDB); PWA instalável + APK Android.
 
 ## 📲 Instalar

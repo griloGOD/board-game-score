@@ -35,12 +35,5 @@ export interface Flip7Match {
   targetScore: number;
 }
 
-/** A posição de um jogador na classificação da partida. */
-export interface Standing {
-  playerId: string;
-  total: number;
-  /** Rank começando em 1; jogadores empatados compartilham o mesmo rank. */
-  rank: number;
-  /** True somente quando a partida terminou e este jogador tem o maior total. */
-  isChampion: boolean;
-}
+// Standing agora é compartilhado entre jogos (ver domain/types.ts).
+export type { Standing } from '../types';
