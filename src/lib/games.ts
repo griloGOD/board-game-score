@@ -1,12 +1,12 @@
 /**
  * Catálogo de jogos.
  *
- * Jogáveis: Flip 7 e Catan; os demais aparecem como "Em breve" para prever a
- * visão. Capas oficiais do BoardGameGeek em /public/games (uso pessoal);
- * se faltar a capa, o card cai para o emoji + cor de destaque.
+ * Jogáveis: Flip 7, Catan, Azul, Ticket to Ride e Trio; os demais aparecem como
+ * "Em breve" para prever a visão. Capas oficiais do BoardGameGeek em
+ * /public/games (uso pessoal); se faltar a capa, o card cai para o emoji + cor.
  */
 
-export type EngineKind = 'flip7' | 'catan';
+export type EngineKind = 'flip7' | 'catan' | 'azul' | 'ticket-to-ride' | 'trio';
 
 export interface GameInfo {
   id: string;
@@ -30,11 +30,11 @@ export const GAMES: GameInfo[] = [
   // 3–4 no jogo base; até 6 com a expansão de 5–6 jogadores.
   { id: 'catan', name: 'Catan', emoji: '🎲', accent: '#f97316', cover: '/games/catan.png', minPlayers: 3, maxPlayers: 6, available: true, engine: 'catan' },
   { id: 'bang-dice', name: 'Bang! Dice', emoji: '🤠', accent: '#ef4444', cover: '/games/bang-dice.jpg', minPlayers: 3, maxPlayers: 8, available: false, engine: null },
-  { id: 'trio', name: 'Trio', emoji: '🔢', accent: '#14b8a6', cover: '/games/trio.jpg', minPlayers: 3, maxPlayers: 6, available: false, engine: null },
-  { id: 'ticket-to-ride', name: 'Ticket to Ride', emoji: '🚂', accent: '#3b82f6', cover: '/games/ticket-to-ride.jpg', minPlayers: 2, maxPlayers: 5, available: false, engine: null },
+  { id: 'trio', name: 'Trio', emoji: '🔢', accent: '#14b8a6', cover: '/games/trio.jpg', minPlayers: 3, maxPlayers: 6, available: true, engine: 'trio' },
+  { id: 'ticket-to-ride', name: 'Ticket to Ride', emoji: '🚂', accent: '#3b82f6', cover: '/games/ticket-to-ride.jpg', minPlayers: 2, maxPlayers: 5, available: true, engine: 'ticket-to-ride' },
   { id: 'survive', name: 'Survive', emoji: '🌋', accent: '#f59e0b', cover: '/games/survive.png', minPlayers: 2, maxPlayers: 4, available: false, engine: null },
   { id: 'dixit', name: 'Dixit', emoji: '🐰', accent: '#a855f7', cover: '/games/dixit.jpg', minPlayers: 3, maxPlayers: 6, available: false, engine: null },
-  { id: 'azul', name: 'Azul', emoji: '🔷', accent: '#0ea5e9', cover: '/games/azul.png', minPlayers: 2, maxPlayers: 4, available: false, engine: null },
+  { id: 'azul', name: 'Azul', emoji: '🔷', accent: '#0ea5e9', cover: '/games/azul.png', minPlayers: 2, maxPlayers: 4, available: true, engine: 'azul' },
 ];
 
 export function getGame(id: string): GameInfo | undefined {

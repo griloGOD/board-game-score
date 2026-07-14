@@ -15,9 +15,10 @@ import { Dialog } from '@/components/Dialog';
 interface Props {
   game: GameInfo;
   /** Valor inicial do campo de meta (ex.: 200 no Flip 7, 10 no Catan). */
-  defaultTarget: number;
-  targetLabel: string;
-  targetHint: string;
+  defaultTarget?: number;
+  /** Rótulo da meta. Se ausente, a seção de meta some (jogos sem meta, ex.: Azul/TtR). */
+  targetLabel?: string;
+  targetHint?: string;
   /** Cria a partida e devolve o id; o componente navega para /partida. */
   onCreate: (players: Player[], target: number) => Promise<string>;
 }
@@ -34,7 +35,7 @@ export function MatchSetup({ game, defaultTarget, targetLabel, targetHint, onCre
   const [name, setName] = useState('');
   const [avatar, setAvatar] = useState(defaultAvatar(0));
   const [color, setColor] = useState(defaultColor(0));
-  const [target, setTarget] = useState(defaultTarget);
+  const [target, setTarget] = useState(defaultTarget ?? 0);
   const [starting, setStarting] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [savedToDelete, setSavedToDelete] = useState<Player | null>(null);
@@ -225,18 +226,20 @@ export function MatchSetup({ game, defaultTarget, targetLabel, targetHint, onCre
         </section>
       )}
 
-      {/* Meta */}
-      <section className="mb-6">
-        <h2 className="mb-1.5 text-xs font-bold uppercase tracking-wider text-muted">{targetLabel}</h2>
-        <input
-          type="number"
-          value={target}
-          min={1}
-          onChange={(e) => setTarget(Math.max(1, Number(e.target.value) || 0))}
-          className="w-28 rounded-xl border border-border bg-bg px-3 py-2.5 text-ink outline-none focus:border-primary"
-        />
-        <p className="mt-1 text-xs text-muted">{targetHint}</p>
-      </section>
+      {/* Meta (só nos jogos que têm meta numérica) */}
+      {targetLabel && (
+        <section className="mb-6">
+          <h2 className="mb-1.5 text-xs font-bold uppercase tracking-wider text-muted">{targetLabel}</h2>
+          <input
+            type="number"
+            value={target}
+            min={1}
+            onChange={(e) => setTarget(Math.max(1, Number(e.target.value) || 0))}
+            className="w-28 rounded-xl border border-border bg-bg px-3 py-2.5 text-ink outline-none focus:border-primary"
+          />
+          {targetHint && <p className="mt-1 text-xs text-muted">{targetHint}</p>}
+        </section>
+      )}
 
       {/* Começar */}
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-bg/90 px-4 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-md">
