@@ -8,6 +8,9 @@ import { listFinishedMatches, toFlip7Match, deleteMatch } from '@/lib/repo';
 import { GAMES, getGame } from '@/lib/games';
 import { computeStandings } from '@/domain/flip7/scoring';
 import { computeCatanScore, initialCatanPlayer } from '@/domain/catan/scoring';
+import { computeAzulScore, initialAzulPlayer } from '@/domain/azul/scoring';
+import { computeTtrScore, initialTtrPlayer } from '@/domain/ttr/scoring';
+import { computeTrioScore, initialTrioPlayer } from '@/domain/trio/scoring';
 import { computeRanking, type FinishedMatchSummary, type RankRow } from '@/domain/ranking';
 import { Avatar } from '@/components/Avatar';
 import { Dialog } from '@/components/Dialog';
@@ -42,22 +45,44 @@ function formatDate(ts: number): string {
 
 /** Total final por jogador de uma partida, no motor do jogo dela. */
 function matchTotals(m: MatchRecord): Record<string, number> {
-  if (m.gameId === 'catan') {
-    const state = m.catanState ?? {};
-    return Object.fromEntries(
-      m.playerIds.map((id) => [id, computeCatanScore(state[id] ?? initialCatanPlayer())]),
-    );
+  const byId = (score: (id: string) => number) =>
+    Object.fromEntries(m.playerIds.map((id) => [id, score(id)]));
+  switch (m.gameId) {
+    case 'catan': {
+      const s = m.catanState ?? {};
+      return byId((id) => computeCatanScore(s[id] ?? initialCatanPlayer()));
+    }
+    case 'azul': {
+      const s = m.azulState ?? {};
+      return byId((id) => computeAzulScore(s[id] ?? initialAzulPlayer()));
+    }
+    case 'ticket-to-ride': {
+      const s = m.ttrState ?? {};
+      return byId((id) => computeTtrScore(s[id] ?? initialTtrPlayer()));
+    }
+    case 'trio': {
+      const s = m.trioState ?? {};
+      return byId((id) => computeTrioScore(s[id] ?? initialTrioPlayer()));
+    }
+    default:
+      return Object.fromEntries(computeStandings(toFlip7Match(m)).map((s) => [s.playerId, s.total]));
   }
-  return Object.fromEntries(computeStandings(toFlip7Match(m)).map((s) => [s.playerId, s.total]));
 }
 
-/** Detalhe da partida na lista: rodadas no Flip 7, pontuação do campeão no Catan. */
+/** Detalhe da partida na lista: rodadas no Flip 7, pontos/trios do campeão nos demais. */
 function matchDetail(m: MatchRecord, totals: Record<string, number>): string {
-  if (m.gameId === 'catan') {
-    const champTotal = Math.max(0, ...m.championIds.map((id) => totals[id] ?? 0));
-    return `${champTotal} PV`;
+  const champTotal = Math.max(0, ...m.championIds.map((id) => totals[id] ?? 0));
+  switch (m.gameId) {
+    case 'catan':
+      return `${champTotal} PV`;
+    case 'azul':
+    case 'ticket-to-ride':
+      return `${champTotal} pts`;
+    case 'trio':
+      return `${champTotal} ${champTotal === 1 ? 'trio' : 'trios'}`;
+    default:
+      return `${m.rounds.length} rodadas`;
   }
-  return `${m.rounds.length} rodadas`;
 }
 
 export default function HistoricoPage() {
