@@ -3,6 +3,12 @@ import type { Player } from '@/domain/types';
 import type { Flip7Match } from '@/domain/flip7/types';
 import type { CatanAction } from '@/domain/catan/types';
 import { applyCatanAction, initialCatanState } from '@/domain/catan/scoring';
+import type { AzulAction } from '@/domain/azul/types';
+import { applyAzulAction, azulChampions, initialAzulState } from '@/domain/azul/scoring';
+import type { TtrAction } from '@/domain/ttr/types';
+import { applyTtrAction, initialTtrState, ttrChampions } from '@/domain/ttr/scoring';
+import type { TrioAction } from '@/domain/trio/types';
+import { applyTrioAction, hasTrioWon, initialTrioState, TRIO_DEFAULT_TARGET } from '@/domain/trio/scoring';
 
 export function newId(): string {
   return crypto.randomUUID();
@@ -64,6 +70,37 @@ export async function createCatanMatch(players: Player[], targetScore = 10): Pro
   return record.id;
 }
 
+// Azul e Ticket to Ride não têm meta numérica (o fim é declarado); o alvo fica 0.
+export async function createAzulMatch(players: Player[], _targetScore = 0): Promise<string> {
+  await deleteOpenMatches();
+  const record: MatchRecord = {
+    ...newMatchRecord('azul', players, 0),
+    azulState: initialAzulState(players.map((p) => p.id)),
+  };
+  await db.matches.add(record);
+  return record.id;
+}
+
+export async function createTtrMatch(players: Player[], _targetScore = 0): Promise<string> {
+  await deleteOpenMatches();
+  const record: MatchRecord = {
+    ...newMatchRecord('ticket-to-ride', players, 0),
+    ttrState: initialTtrState(players.map((p) => p.id)),
+  };
+  await db.matches.add(record);
+  return record.id;
+}
+
+export async function createTrioMatch(players: Player[], targetScore = TRIO_DEFAULT_TARGET): Promise<string> {
+  await deleteOpenMatches();
+  const record: MatchRecord = {
+    ...newMatchRecord('trio', players, targetScore),
+    trioState: initialTrioState(players.map((p) => p.id)),
+  };
+  await db.matches.add(record);
+  return record.id;
+}
+
 export async function getMatch(id: string): Promise<MatchRecord | undefined> {
   return db.matches.get(id);
 }
@@ -80,6 +117,14 @@ export async function listFinishedMatches(gameId?: string): Promise<MatchRecord[
   const finished = await db.matches.where('status').equals('finalizada').toArray();
   const filtered = gameId ? finished.filter((m) => m.gameId === gameId) : finished;
   return filtered.sort((a, b) => b.createdAt - a.createdAt);
+}
+
+/** Nº de partidas finalizadas por jogo (para ordenar a home por "mais jogados"). */
+export async function matchCountsByGame(): Promise<Record<string, number>> {
+  const finished = await db.matches.where('status').equals('finalizada').toArray();
+  const counts: Record<string, number> = {};
+  for (const m of finished) counts[m.gameId] = (counts[m.gameId] ?? 0) + 1;
+  return counts;
 }
 
 /** Extrai a "visão" que o motor de pontuação entende, a partir do registro. */
@@ -124,4 +169,75 @@ export async function reopenMatch(matchId: string): Promise<void> {
   const m = await db.matches.get(matchId);
   if (!m) return;
   await db.matches.put({ ...m, status: 'em_andamento', championIds: [], updatedAt: Date.now() });
+}
+
+// ---- Azul ----
+
+export async function applyAzulMatchAction(matchId: string, playerId: string, action: AzulAction): Promise<void> {
+  await db.transaction('rw', db.matches, async () => {
+    const m = await db.matches.get(matchId);
+    if (!m || m.gameId !== 'azul' || m.status !== 'em_andamento') return;
+    const state = m.azulState ?? initialAzulState(m.playerIds);
+    await db.matches.put({ ...m, azulState: applyAzulAction(state, playerId, action), updatedAt: Date.now() });
+  });
+}
+
+/** Encerra o Azul: campeão(ões) por maior total (desempate por linhas completas). */
+export async function finishAzulByHighest(matchId: string): Promise<void> {
+  const m = await db.matches.get(matchId);
+  if (!m) return;
+  const state = m.azulState ?? initialAzulState(m.playerIds);
+  await db.matches.put({
+    ...m,
+    status: 'finalizada',
+    championIds: azulChampions(m.playerIds, state),
+    updatedAt: Date.now(),
+  });
+}
+
+// ---- Ticket to Ride ----
+
+export async function applyTtrMatchAction(matchId: string, playerId: string, action: TtrAction): Promise<void> {
+  await db.transaction('rw', db.matches, async () => {
+    const m = await db.matches.get(matchId);
+    if (!m || m.gameId !== 'ticket-to-ride' || m.status !== 'em_andamento') return;
+    const state = m.ttrState ?? initialTtrState(m.playerIds);
+    await db.matches.put({ ...m, ttrState: applyTtrAction(state, playerId, action), updatedAt: Date.now() });
+  });
+}
+
+/** Encerra o Ticket to Ride: campeão(ões) por maior total (desempate pelo trajeto mais longo). */
+export async function finishTtrByHighest(matchId: string): Promise<void> {
+  const m = await db.matches.get(matchId);
+  if (!m) return;
+  const state = m.ttrState ?? initialTtrState(m.playerIds);
+  await db.matches.put({
+    ...m,
+    status: 'finalizada',
+    championIds: ttrChampions(m.playerIds, state),
+    updatedAt: Date.now(),
+  });
+}
+
+// ---- Trio ----
+
+/**
+ * Aplica uma ação do Trio e ENCERRA na hora se o jogador venceu (3 trios ou o
+ * trio de 7) — a vitória é automática, como no Flip 7.
+ */
+export async function applyTrioMatchAction(matchId: string, playerId: string, action: TrioAction): Promise<void> {
+  await db.transaction('rw', db.matches, async () => {
+    const m = await db.matches.get(matchId);
+    if (!m || m.gameId !== 'trio' || m.status !== 'em_andamento') return;
+    const state = applyTrioAction(m.trioState ?? initialTrioState(m.playerIds), playerId, action);
+    const target = m.targetScore || TRIO_DEFAULT_TARGET;
+    const won = hasTrioWon(state[playerId], target);
+    await db.matches.put({
+      ...m,
+      trioState: state,
+      status: won ? 'finalizada' : 'em_andamento',
+      championIds: won ? [playerId] : [],
+      updatedAt: Date.now(),
+    });
+  });
 }

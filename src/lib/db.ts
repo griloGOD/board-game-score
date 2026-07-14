@@ -2,6 +2,9 @@ import Dexie, { type Table } from 'dexie';
 import type { Player } from '@/domain/types';
 import type { Flip7Round } from '@/domain/flip7/types';
 import type { CatanState } from '@/domain/catan/types';
+import type { AzulState } from '@/domain/azul/types';
+import type { TtrState } from '@/domain/ttr/types';
+import type { TrioState } from '@/domain/trio/types';
 
 /**
  * Registro de uma partida gravado no IndexedDB.
@@ -14,6 +17,9 @@ import type { CatanState } from '@/domain/catan/types';
  * - Flip 7: `rounds` são as rodadas fechadas; `draftRound` é a rodada em
  *   andamento (pode estar parcial) — nada se perde se a página recarregar.
  * - Catan: `catanState` é o estado vivo por jogador (construções e cartas).
+ * - Azul: `azulState` guarda as rodadas e os bônus de fim por jogador.
+ * - Ticket to Ride: `ttrState` guarda trajetos, bilhetes e o trajeto mais longo.
+ * - Trio: `trioState` guarda os trios (e o trio de 7) por jogador.
  */
 export interface MatchRecord {
   id: string;
@@ -28,6 +34,12 @@ export interface MatchRecord {
   draftRound: Flip7Round;
   /** Estado do Catan (só em partidas com gameId 'catan'). */
   catanState?: CatanState;
+  /** Estado do Azul (só em partidas com gameId 'azul'). */
+  azulState?: AzulState;
+  /** Estado do Ticket to Ride (só em partidas com gameId 'ticket-to-ride'). */
+  ttrState?: TtrState;
+  /** Estado do Trio (só em partidas com gameId 'trio'). */
+  trioState?: TrioState;
   championIds: string[];
 }
 
