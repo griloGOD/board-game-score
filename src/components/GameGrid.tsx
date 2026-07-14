@@ -1,16 +1,49 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { GAMES, getGame } from '@/lib/games';
-import { getActiveMatch } from '@/lib/repo';
+import { getActiveMatch, matchCountsByGame } from '@/lib/repo';
 import { Dialog } from '@/components/Dialog';
+
+type SortMode = 'plays' | 'name';
+
+const SORT_TABS: { key: SortMode; label: string }[] = [
+  { key: 'plays', label: 'Mais jogados' },
+  { key: 'name', label: 'Por nome' },
+];
 
 export function GameGrid() {
   const router = useRouter();
   const active = useLiveQuery(() => getActiveMatch(), []);
+  const counts = useLiveQuery(() => matchCountsByGame(), []) ?? ({} as Record<string, number>);
   const [confirmGame, setConfirmGame] = useState<string | null>(null);
+  const [sort, setSort] = useState<SortMode>('plays');
+
+  // Lê a preferência salva depois de montar (localStorage não existe no prerender,
+  // e começar em 'plays' evita divergência de hidratação).
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('bgs.homeSort');
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (saved === 'plays' || saved === 'name') setSort(saved);
+    } catch {}
+  }, []);
+
+  function changeSort(next: SortMode) {
+    setSort(next);
+    try {
+      localStorage.setItem('bgs.homeSort', next);
+    } catch {}
+  }
+
+  // Jogáveis primeiro; dentro do grupo, o modo escolhido (contagem desc ou nome A–Z).
+  const sorted = GAMES.map((game, i) => ({ game, i, plays: counts[game.id] ?? 0 })).sort((a, b) => {
+    if (a.game.available !== b.game.available) return a.game.available ? -1 : 1;
+    if (sort === 'plays') return b.plays - a.plays || a.i - b.i;
+    return a.game.name.localeCompare(b.game.name, 'pt-BR');
+  });
 
   function pick(gameId: string) {
     if (active) setConfirmGame(gameId); // já há partida em andamento → confirma
@@ -19,8 +52,22 @@ export function GameGrid() {
 
   return (
     <>
+      <div className="mb-4 flex rounded-xl bg-surface-2 p-1 text-sm">
+        {SORT_TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => changeSort(t.key)}
+            className={`flex-1 rounded-lg py-1.5 font-semibold transition ${
+              sort === t.key ? 'bg-bg text-ink shadow-sm' : 'text-muted'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {GAMES.map((game) => {
+        {sorted.map(({ game }) => {
           const inner = (
             <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-surface-2 shadow-sm ring-1 ring-border">
               {game.cover ? (
