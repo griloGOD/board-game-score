@@ -1,12 +1,24 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, type ReactElement } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useLiveQuery } from 'dexie-react-hooks';
+import type { MatchRecord } from '@/lib/db';
 import { getMatch } from '@/lib/repo';
 import { Flip7MatchView } from '@/components/flip7/Flip7MatchView';
 import { CatanMatchView } from '@/components/catan/CatanMatchView';
+import { AzulMatchView } from '@/components/azul/AzulMatchView';
+import { TtrMatchView } from '@/components/ttr/TtrMatchView';
+import { TrioMatchView } from '@/components/trio/TrioMatchView';
+
+/** Placar de cada jogo, por gameId. O padrão (fallback) é o Flip 7. */
+const MATCH_VIEWS: Record<string, (props: { match: MatchRecord }) => ReactElement> = {
+  catan: CatanMatchView,
+  azul: AzulMatchView,
+  'ticket-to-ride': TtrMatchView,
+  trio: TrioMatchView,
+};
 
 /** Carrega a partida pelo id da URL e delega para o placar do jogo certo. */
 function MatchLoader() {
@@ -27,8 +39,8 @@ function MatchLoader() {
   }
   if (match === undefined) return <p className="text-muted">Carregando…</p>;
 
-  if (match.gameId === 'catan') return <CatanMatchView match={match} />;
-  return <Flip7MatchView match={match} />;
+  const View = MATCH_VIEWS[match.gameId] ?? Flip7MatchView;
+  return <View match={match} />;
 }
 
 export default function MatchPage() {

@@ -71,7 +71,7 @@ export async function createCatanMatch(players: Player[], targetScore = 10): Pro
 }
 
 // Azul e Ticket to Ride não têm meta numérica (o fim é declarado); o alvo fica 0.
-export async function createAzulMatch(players: Player[], _targetScore = 0): Promise<string> {
+export async function createAzulMatch(players: Player[]): Promise<string> {
   await deleteOpenMatches();
   const record: MatchRecord = {
     ...newMatchRecord('azul', players, 0),
@@ -81,7 +81,7 @@ export async function createAzulMatch(players: Player[], _targetScore = 0): Prom
   return record.id;
 }
 
-export async function createTtrMatch(players: Player[], _targetScore = 0): Promise<string> {
+export async function createTtrMatch(players: Player[]): Promise<string> {
   await deleteOpenMatches();
   const record: MatchRecord = {
     ...newMatchRecord('ticket-to-ride', players, 0),
