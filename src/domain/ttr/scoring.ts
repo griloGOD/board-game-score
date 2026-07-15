@@ -1,5 +1,5 @@
 import type { Standing } from '../types';
-import type { TtrAction, TtrPlayerState, TtrState } from './types';
+import type { TtrAction, TtrPlayerState, TtrState, TtrTrainColor } from './types';
 
 /** Pontos por comprimento de trajeto (1 a 6 vagões). */
 export const TTR_ROUTE_VALUES = [1, 2, 4, 7, 10, 15] as const;
@@ -7,18 +7,40 @@ export const TTR_ROUTE_VALUES = [1, 2, 4, 7, 10, 15] as const;
 /** Bônus do Trajeto Mais Longo (de um jogador só). */
 export const TTR_LONGEST_PATH_BONUS = 10;
 
+/** Cores dos trens da caixa, na ordem em que são atribuídas aos jogadores. */
+export const TTR_TRAIN_COLORS: readonly TtrTrainColor[] = ['blue', 'red', 'green', 'yellow', 'black'];
+
 export function initialTtrPlayer(): TtrPlayerState {
-  return { routes: [], ticketPoints: 0, hasLongestPath: false };
+  return { routes: [], tickets: [], hasLongestPath: false };
 }
 
 export function initialTtrState(playerIds: string[]): TtrState {
-  return Object.fromEntries(playerIds.map((id) => [id, initialTtrPlayer()]));
+  return Object.fromEntries(
+    playerIds.map((id, i) => [id, { ...initialTtrPlayer(), color: TTR_TRAIN_COLORS[i % TTR_TRAIN_COLORS.length] }]),
+  );
+}
+
+/** Bilhetes como lista, migrando o líquido único do formato antigo (v1.6.0). */
+export function ticketsOf(p: TtrPlayerState): number[] {
+  return p.tickets ?? (p.ticketPoints ? [p.ticketPoints] : []);
+}
+
+/** Líquido dos bilhetes (cumpridos − falhados). */
+export function ticketsNet(p: TtrPlayerState): number {
+  return ticketsOf(p).reduce((sum, n) => sum + n, 0);
 }
 
 /** Pontuação: soma dos trajetos + líquido dos bilhetes + o bônus do trajeto. */
 export function computeTtrScore(p: TtrPlayerState): number {
   const routes = p.routes.reduce((sum, n) => sum + n, 0);
-  return routes + p.ticketPoints + (p.hasLongestPath ? TTR_LONGEST_PATH_BONUS : 0);
+  return routes + ticketsNet(p) + (p.hasLongestPath ? TTR_LONGEST_PATH_BONUS : 0);
+}
+
+/** Estado do jogador sem o campo legado (após migrar para a lista). */
+function withTickets(p: TtrPlayerState, tickets: number[]): TtrPlayerState {
+  const { ticketPoints: _legacy, ...rest } = p;
+  void _legacy;
+  return { ...rest, tickets };
 }
 
 /**
@@ -45,8 +67,26 @@ export function applyTtrAction(state: TtrState, playerId: string, action: TtrAct
       return { ...state, [playerId]: { ...p, routes: p.routes.filter((_, i) => i !== action.index) } };
     }
 
-    case 'setTicketPoints':
-      return { ...state, [playerId]: { ...p, ticketPoints: Math.round(action.value) || 0 } };
+    case 'addTicket': {
+      const value = Math.round(action.value);
+      if (!Number.isFinite(action.value) || value === 0) return state;
+      return { ...state, [playerId]: withTickets(p, [...ticketsOf(p), value]) };
+    }
+
+    case 'removeTicket': {
+      const tickets = ticketsOf(p);
+      if (action.index < 0 || action.index >= tickets.length) return state;
+      return { ...state, [playerId]: withTickets(p, tickets.filter((_, i) => i !== action.index)) };
+    }
+
+    case 'setColor': {
+      // A cor é exclusiva: escolher a cor de outro jogador troca as duas entre si.
+      const next: TtrState = { ...state, [playerId]: { ...p, color: action.color } };
+      for (const [id, ps] of Object.entries(state)) {
+        if (id !== playerId && ps.color === action.color) next[id] = { ...ps, color: p.color };
+      }
+      return next;
+    }
 
     case 'toggleLongestPath': {
       const turningOn = !p.hasLongestPath;

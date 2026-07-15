@@ -15,9 +15,15 @@ interface Props {
   onCancel: () => void;
 }
 
+/** Tira zeros à esquerda ("020" → "20", "-07" → "-7") preservando o sinal. */
+export function stripLeadingZeros(text: string): string {
+  return text.replace(/^(-?)0+(?=\d)/, '$1');
+}
+
 /**
  * Entrada numérica em folha inferior (aceita negativos — usada em "+ pontos da
- * rodada" do Azul e "bilhetes" do Ticket to Ride). Mesmo visual do Dialog.
+ * rodada" do Azul e correções de placar). Mesmo visual do Dialog. Começa vazia
+ * quando o valor é 0 e normaliza zeros à esquerda para digitar direto.
  */
 export function NumberPrompt({
   title,
@@ -29,7 +35,7 @@ export function NumberPrompt({
   onConfirm,
   onCancel,
 }: Props) {
-  const [raw, setRaw] = useState(String(initial));
+  const [raw, setRaw] = useState(initial === 0 ? '' : String(initial));
   const value = Math.round(Number(raw) || 0);
 
   const step =
@@ -55,10 +61,12 @@ export function NumberPrompt({
             type="number"
             inputMode="numeric"
             value={raw}
+            placeholder="0"
             autoFocus
-            onChange={(e) => setRaw(e.target.value)}
+            onFocus={(e) => e.target.select()}
+            onChange={(e) => setRaw(stripLeadingZeros(e.target.value))}
             onKeyDown={(e) => e.key === 'Enter' && onConfirm(value)}
-            className="w-full rounded-xl border border-border bg-bg px-3 py-2.5 text-center font-display text-2xl font-extrabold tabular-nums text-ink outline-none focus:border-primary"
+            className="w-full rounded-xl border border-border bg-bg px-3 py-2.5 text-center font-display text-2xl font-extrabold tabular-nums text-ink outline-none placeholder:text-muted/50 focus:border-primary"
           />
           <button onClick={() => setRaw(String(value + 1))} className={step} aria-label="Mais um">
             +

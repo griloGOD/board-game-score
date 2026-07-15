@@ -3,19 +3,24 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import type { Player } from '@/domain/types';
-import type { TtrPlayerState } from '@/domain/ttr/types';
+import type { TtrPlayerState, TtrTrainColor } from '@/domain/ttr/types';
 import type { MatchRecord } from '@/lib/db';
 import { applyTtrMatchAction, finishTtrByHighest, reopenMatch } from '@/lib/repo';
 import {
   computeTtrStandings,
   initialTtrPlayer,
   initialTtrState,
+  ticketsNet,
   ttrChampions,
   TTR_ROUTE_VALUES,
+  TTR_TRAIN_COLORS,
 } from '@/domain/ttr/scoring';
 import { Avatar } from '@/components/Avatar';
 import { Dialog } from '@/components/Dialog';
-import { NumberPrompt } from '@/components/NumberPrompt';
+import { MatchHeader } from '@/components/MatchHeader';
+import { TrainPiece } from './TrainPiece';
+import { TtrTicketsSheet } from './TtrTicketsSheet';
+import { TtrColorSheet } from './TtrColorSheet';
 
 /** Nº de vagões (comprimento) que vale cada pontuação de trajeto. */
 const ROUTE_LENGTH: Record<number, number> = { 1: 1, 2: 2, 4: 3, 7: 4, 10: 5, 15: 6 };
@@ -26,19 +31,22 @@ function routesSum(p: TtrPlayerState): number {
 
 /** Resumo textual do estado (usado quando a partida encerra). */
 function breakdown(p: TtrPlayerState): string {
+  const net = ticketsNet(p);
   const parts = [`${routesSum(p)} de trajetos`];
-  if (p.ticketPoints !== 0) parts.push(`bilhetes ${p.ticketPoints > 0 ? '+' : ''}${p.ticketPoints}`);
+  if (net !== 0) parts.push(`bilhetes ${net > 0 ? '+' : ''}${net}`);
   if (p.hasLongestPath) parts.push('🛤️ trajeto mais longo +10');
   return parts.join(' · ');
 }
 
 /**
  * Placar do Ticket to Ride: total corrente por jogador. Trajetos capturados por
- * comprimento (1·2·4·7·10·15), bilhetes de destino (líquido) e o Trajeto Mais
- * Longo (+10, exclusivo). Sem meta — o fim é declarado e vence o maior total.
+ * comprimento (1·2·4·7·10·15), bilhetes de destino lançados um a um e o Trajeto
+ * Mais Longo (+10, exclusivo). Cada jogador tem seus trens numa cor da caixa.
+ * Sem meta — o fim é declarado e vence o maior total.
  */
 export function TtrMatchView({ match: m }: { match: MatchRecord }) {
   const [tickets, setTickets] = useState<Player | null>(null);
+  const [trains, setTrains] = useState<Player | null>(null);
   const [ending, setEnding] = useState(false);
 
   const finished = m.status === 'finalizada';
@@ -47,6 +55,11 @@ export function TtrMatchView({ match: m }: { match: MatchRecord }) {
   const rankById = new Map(standings.map((s) => [s.playerId, s.rank]));
   const totalById = new Map(standings.map((s) => [s.playerId, s.total]));
   const leader = Math.max(0, ...standings.map((s) => s.total));
+
+  /** Cor do trem do jogador (partidas antigas caem na ordem padrão da caixa). */
+  function colorOf(pid: string): TtrTrainColor {
+    return state[pid]?.color ?? TTR_TRAIN_COLORS[Math.max(0, m.playerIds.indexOf(pid)) % TTR_TRAIN_COLORS.length];
+  }
 
   const champions = m.championIds
     .map((cid) => m.players.find((p) => p.id === cid))
@@ -58,18 +71,12 @@ export function TtrMatchView({ match: m }: { match: MatchRecord }) {
     .join(' e ');
 
   return (
-    <div className={finished ? 'pb-28' : 'pb-24'}>
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">Ticket to Ride</h1>
-          <p className="text-sm text-muted">
-            {finished ? 'Partida encerrada' : 'Maior pontuação vence · sem meta'}
-          </p>
-        </div>
-        <Link href="/" className="text-sm font-medium text-muted transition-colors hover:text-ink">
-          Sair
-        </Link>
-      </div>
+    <div className="pb-28">
+      <MatchHeader
+        gameId="ticket-to-ride"
+        title="Ticket to Ride"
+        subtitle={finished ? 'Partida encerrada' : 'Maior pontuação vence · sem meta'}
+      />
 
       {finished && champions.length > 0 && (
         <div className="mb-6">
@@ -92,6 +99,8 @@ export function TtrMatchView({ match: m }: { match: MatchRecord }) {
       <ol className="flex flex-col gap-3">
         {m.players.map((p) => {
           const ps = state[p.id] ?? initialTtrPlayer();
+          const color = colorOf(p.id);
+          const net = ticketsNet(ps);
           const total = totalById.get(p.id) ?? 0;
           const rank = rankById.get(p.id) ?? 1;
           const pct = leader > 0 ? Math.round((total / leader) * 100) : 0;
@@ -108,6 +117,15 @@ export function TtrMatchView({ match: m }: { match: MatchRecord }) {
                 <span className="w-6 text-center text-sm font-bold text-muted">{rank}º</span>
                 <Avatar emoji={p.avatar} color={p.color} />
                 <span className="min-w-0 flex-1 truncate font-semibold text-ink">{p.name}</span>
+                <button
+                  onClick={() => !finished && setTrains(p)}
+                  disabled={finished}
+                  aria-label={`Trocar a cor dos trens de ${p.name}`}
+                  title="Trocar a cor dos trens"
+                  className="shrink-0 rounded-lg bg-bg px-1.5 py-1 ring-1 ring-border transition enabled:hover:bg-surface-2"
+                >
+                  <TrainPiece color={color} className="h-4 w-auto" />
+                </button>
                 <span className="font-display text-2xl font-extrabold tabular-nums text-ink">{total}</span>
                 <span className="-ml-1 pt-1 text-[11px] font-bold uppercase text-muted">pts</span>
               </div>
@@ -129,7 +147,10 @@ export function TtrMatchView({ match: m }: { match: MatchRecord }) {
                           aria-label={`Trajeto de ${ROUTE_LENGTH[v]} vagões, +${v} pontos`}
                         >
                           <div className="font-display text-base font-extrabold tabular-nums text-ink">+{v}</div>
-                          <div className="text-[10px] text-muted">{ROUTE_LENGTH[v]}🚃</div>
+                          <div className="flex items-center justify-center gap-0.5 text-[10px] text-muted">
+                            <TrainPiece color={color} className="h-2.5 w-auto" />
+                            <span className="tabular-nums">×{ROUTE_LENGTH[v]}</span>
+                          </div>
                         </button>
                       ))}
                     </div>
@@ -147,7 +168,7 @@ export function TtrMatchView({ match: m }: { match: MatchRecord }) {
                       onClick={() => setTickets(p)}
                       className="flex-1 rounded-lg bg-bg px-3 py-1.5 text-xs font-semibold text-ink ring-1 ring-border transition hover:bg-surface-2"
                     >
-                      🎫 Bilhetes: <span className="tabular-nums">{ps.ticketPoints > 0 ? `+${ps.ticketPoints}` : ps.ticketPoints}</span>
+                      🎫 Bilhetes: <span className="tabular-nums">{net > 0 ? `+${net}` : net}</span>
                     </button>
                   </div>
 
@@ -197,16 +218,22 @@ export function TtrMatchView({ match: m }: { match: MatchRecord }) {
       )}
 
       {tickets && (
-        <NumberPrompt
-          title={`Bilhetes de ${tickets.name}`}
-          hint="Líquido no fim: soma dos cumpridos menos os falhados (pode ser negativo)."
-          initial={(state[tickets.id] ?? initialTtrPlayer()).ticketPoints}
-          confirmLabel="Salvar"
-          onConfirm={(value) => {
-            void applyTtrMatchAction(m.id, tickets.id, { type: 'setTicketPoints', value });
-            setTickets(null);
-          }}
-          onCancel={() => setTickets(null)}
+        <TtrTicketsSheet
+          matchId={m.id}
+          player={tickets}
+          state={state[tickets.id] ?? initialTtrPlayer()}
+          onClose={() => setTickets(null)}
+        />
+      )}
+
+      {trains && (
+        <TtrColorSheet
+          matchId={m.id}
+          player={trains}
+          state={state}
+          players={m.players}
+          colorOf={colorOf}
+          onClose={() => setTrains(null)}
         />
       )}
 

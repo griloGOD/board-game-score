@@ -9,8 +9,8 @@ export default function NewTrioMatchPage() {
     <MatchSetup
       game={getGame('trio')!}
       defaultTarget={3}
-      targetLabel="Trios para vencer"
-      targetHint="Padrão do Trio: 3 trios (ou pegar o trio de 7)."
+      targetLabel="Trios para fechar a rodada"
+      targetHint="Cada rodada vencida (3 trios ou o trio de 7) vale 1 ponto — joguem até decidirem parar."
       onCreate={createTrioMatch}
     />
   );

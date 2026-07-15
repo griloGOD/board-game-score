@@ -1,13 +1,26 @@
 // Service worker simples para deixar o app utilizável offline após a 1ª visita.
-// Estratégia: precache do "/"; navegações = network-first com fallback ao cache;
+// Estratégia: precache das rotas do app; navegações = network-first com fallback
+// ao cache DA PRÓPRIA URL (nunca servir o Início no lugar de outra tela);
 // demais assets same-origin = stale-while-revalidate.
-const CACHE = 'bgs-v1';
+const CACHE = 'bgs-v2';
+
+// Com trailingSlash, cada rota é uma pasta com index.html.
+const ROUTES = [
+  '/',
+  '/historico/',
+  '/partida/',
+  '/novo/flip7/',
+  '/novo/catan/',
+  '/novo/azul/',
+  '/novo/ticket-to-ride/',
+  '/novo/trio/',
+];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
       .open(CACHE)
-      .then((cache) => cache.add('/'))
+      .then((cache) => cache.addAll(ROUTES).catch(() => cache.add('/')))
       .then(() => self.skipWaiting()),
   );
 });
@@ -33,10 +46,16 @@ self.addEventListener('fetch', (event) => {
       fetch(request)
         .then((response) => {
           const copy = response.clone();
-          caches.open(CACHE).then((cache) => cache.put(request, copy));
+          // Guarda pela rota (sem query) para /partida/?id=x reusar /partida/.
+          caches.open(CACHE).then((cache) => cache.put(url.pathname, copy));
           return response;
         })
-        .catch(() => caches.match(request).then((cached) => cached || caches.match('/'))),
+        .catch(() =>
+          caches
+            .match(request, { ignoreSearch: true })
+            // Último recurso (rota nunca visitada, offline): o Início.
+            .then((cached) => cached || caches.match('/')),
+        ),
     );
     return;
   }

@@ -9,6 +9,7 @@ import { saveMatch, toFlip7Match } from '@/lib/repo';
 import { computeStandings, computeRoundScore, isGameOver } from '@/domain/flip7/scoring';
 import { Avatar } from '@/components/Avatar';
 import { Flip7EntryDialog } from '@/components/flip7/Flip7EntryDialog';
+import { MatchHeader } from '@/components/MatchHeader';
 
 type EditTarget = { pid: string; round: number | 'draft' };
 
@@ -77,17 +78,11 @@ export function Flip7MatchView({ match: m }: { match: MatchRecord }) {
 
   return (
     <div className="pb-28">
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">Flip 7</h1>
-          <p className="text-sm text-muted">
-            {finished ? 'Partida encerrada' : `Rodada ${roundNumber}`} · meta {m.targetScore}
-          </p>
-        </div>
-        <Link href="/" className="text-sm font-medium text-muted transition-colors hover:text-ink">
-          Sair
-        </Link>
-      </div>
+      <MatchHeader
+        gameId="flip7"
+        title="Flip 7"
+        subtitle={`${finished ? 'Partida encerrada' : `Rodada ${roundNumber}`} · meta ${m.targetScore}`}
+      />
 
       {finished && champions.length > 0 && (
         <div className="animate-pop-in mb-6 overflow-hidden rounded-3xl bg-accent p-6 text-center text-accent-fg shadow-lg">

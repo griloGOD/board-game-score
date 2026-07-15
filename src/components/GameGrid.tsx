@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { GAMES, getGame } from '@/lib/games';
-import { getActiveMatch, matchCountsByGame } from '@/lib/repo';
+import { listOpenMatches, matchCountsByGame } from '@/lib/repo';
 import { Dialog } from '@/components/Dialog';
 
 type SortMode = 'plays' | 'name';
@@ -16,10 +16,13 @@ const SORT_TABS: { key: SortMode; label: string }[] = [
 
 export function GameGrid() {
   const router = useRouter();
-  const active = useLiveQuery(() => getActiveMatch(), []);
+  const open = useLiveQuery(() => listOpenMatches(), []) ?? [];
   const counts = useLiveQuery(() => matchCountsByGame(), []) ?? ({} as Record<string, number>);
   const [confirmGame, setConfirmGame] = useState<string | null>(null);
   const [sort, setSort] = useState<SortMode>('plays');
+
+  // Cada jogo tem no máximo uma partida aberta; jogos diferentes convivem.
+  const openByGame = new Map(open.map((m) => [m.gameId, m] as const));
 
   // Lê a preferência salva depois de montar (localStorage não existe no prerender,
   // e começar em 'plays' evita divergência de hidratação).
@@ -46,9 +49,12 @@ export function GameGrid() {
   });
 
   function pick(gameId: string) {
-    if (active) setConfirmGame(gameId); // já há partida em andamento → confirma
+    // Só avisa se ESTE jogo já tem partida aberta — outros jogos não são afetados.
+    if (openByGame.has(gameId)) setConfirmGame(gameId);
     else router.push(`/novo/${gameId}`);
   }
+
+  const confirmOpen = confirmGame ? openByGame.get(confirmGame) : undefined;
 
   return (
     <>
@@ -68,6 +74,7 @@ export function GameGrid() {
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {sorted.map(({ game }) => {
+          const hasOpen = openByGame.has(game.id);
           const inner = (
             <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-surface-2 shadow-sm ring-1 ring-border">
               {game.cover ? (
@@ -85,6 +92,13 @@ export function GameGrid() {
                 >
                   <span aria-hidden>{game.emoji}</span>
                 </div>
+              )}
+
+              {hasOpen && (
+                <span className="absolute left-2 top-2 inline-flex items-center gap-1.5 rounded-full bg-success px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-success-fg shadow-md">
+                  <span className="h-1.5 w-1.5 rounded-full bg-success-fg" aria-hidden />
+                  Em andamento
+                </span>
               )}
 
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent p-2.5 pt-9">
@@ -120,20 +134,22 @@ export function GameGrid() {
         })}
       </div>
 
-      {confirmGame && active && (
+      {confirmGame && confirmOpen && (
         <Dialog
-          title="Partida em andamento"
-          message={`Você tem uma partida de ${getGame(active.gameId)?.name ?? 'outro jogo'} que ainda não terminou. Criar uma nova apaga a atual.`}
+          title={`${getGame(confirmGame)?.name ?? 'Jogo'} em andamento`}
+          message={`Você tem uma partida de ${getGame(confirmGame)?.name ?? confirmGame} que ainda não terminou (${confirmOpen.players
+            .map((p) => p.name)
+            .join(', ')}). Criar uma nova apaga só essa partida.`}
           onClose={() => setConfirmGame(null)}
           actions={[
             {
-              label: 'Continuar a atual',
+              label: 'Continuar essa partida',
               variant: 'primary',
-              onClick: () => router.push(`/partida?id=${active.id}`),
+              onClick: () => router.push(`/partida?id=${confirmOpen.id}`),
             },
             {
-              label: 'Criar uma nova',
-              variant: 'ghost',
+              label: 'Criar uma nova (apaga a atual)',
+              variant: 'danger',
               onClick: () => router.push(`/novo/${confirmGame}`),
             },
             { label: 'Cancelar', variant: 'ghost', onClick: () => setConfirmGame(null) },

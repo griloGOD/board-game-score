@@ -15,6 +15,7 @@ import {
 } from '@/domain/catan/scoring';
 import { Avatar } from '@/components/Avatar';
 import { Dialog } from '@/components/Dialog';
+import { MatchHeader } from '@/components/MatchHeader';
 
 function stepClass(kind: 'dec' | 'inc'): string {
   const base =
@@ -86,19 +87,15 @@ export function CatanMatchView({ match: m }: { match: MatchRecord }) {
 
   return (
     <div className={finished ? 'pb-28' : 'pb-10'}>
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">Catan</h1>
-          <p className="text-sm text-muted">
-            {finished
-              ? `Partida encerrada · meta ${m.targetScore} PV`
-              : `Corrida até ${m.targetScore} pontos de vitória`}
-          </p>
-        </div>
-        <Link href="/" className="text-sm font-medium text-muted transition-colors hover:text-ink">
-          Sair
-        </Link>
-      </div>
+      <MatchHeader
+        gameId="catan"
+        title="Catan"
+        subtitle={
+          finished
+            ? `Partida encerrada · meta ${m.targetScore} PV`
+            : `Corrida até ${m.targetScore} pontos de vitória`
+        }
+      />
 
       {finished && champions.length > 0 && (
         <div className="mb-6">

@@ -79,7 +79,7 @@ function matchDetail(m: MatchRecord, totals: Record<string, number>): string {
     case 'ticket-to-ride':
       return `${champTotal} pts`;
     case 'trio':
-      return `${champTotal} ${champTotal === 1 ? 'trio' : 'trios'}`;
+      return `${champTotal} ${champTotal === 1 ? 'ponto' : 'pontos'}`;
     default:
       return `${m.rounds.length} rodadas`;
   }

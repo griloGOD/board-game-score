@@ -15,7 +15,9 @@ import {
 } from '@/domain/azul/scoring';
 import { Avatar } from '@/components/Avatar';
 import { Dialog } from '@/components/Dialog';
+import { MatchHeader } from '@/components/MatchHeader';
 import { NumberPrompt } from '@/components/NumberPrompt';
+import { AzulTile, AZUL_TILE_KINDS, type AzulTileKind } from './AzulTile';
 
 /** Onde estamos editando um ponto de rodada: nova rodada ou uma existente. */
 type RoundEdit = { pid: string; index: number | 'new' };
@@ -24,12 +26,14 @@ const stepBtn =
   'grid h-8 w-8 shrink-0 place-items-center rounded-lg text-lg font-bold transition disabled:opacity-30';
 
 function BonusRow({
+  tile,
   label,
   points,
   value,
   onDec,
   onInc,
 }: {
+  tile: AzulTileKind;
   label: string;
   points: string;
   value: number;
@@ -38,6 +42,7 @@ function BonusRow({
 }) {
   return (
     <div className="flex items-center gap-2">
+      <AzulTile kind={tile} className="h-6 w-6 shrink-0" />
       <div className="min-w-0 flex-1">
         <div className="text-sm font-medium text-ink">{label}</div>
         <div className="text-[11px] text-muted">{points}</div>
@@ -103,17 +108,17 @@ export function AzulMatchView({ match: m }: { match: MatchRecord }) {
 
   return (
     <div className={finished ? 'pb-28' : 'pb-24'}>
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">Azul</h1>
-          <p className="text-sm text-muted">
-            {finished ? 'Partida encerrada' : 'Maior pontuação vence · sem meta'}
-          </p>
+      <MatchHeader
+        gameId="azul"
+        title="Azul"
+        subtitle={finished ? 'Partida encerrada' : 'Maior pontuação vence · sem meta'}
+      >
+        <div className="mt-2 flex gap-1" aria-hidden>
+          {AZUL_TILE_KINDS.map((k) => (
+            <AzulTile key={k} kind={k} className="h-5 w-5 drop-shadow-sm" />
+          ))}
         </div>
-        <Link href="/" className="text-sm font-medium text-muted transition-colors hover:text-ink">
-          Sair
-        </Link>
-      </div>
+      </MatchHeader>
 
       {finished && champions.length > 0 && (
         <div className="mb-6">
@@ -189,9 +194,9 @@ export function AzulMatchView({ match: m }: { match: MatchRecord }) {
                       Fim de jogo · bônus
                     </summary>
                     <div className="flex flex-col gap-2 p-3 pt-1">
-                      <BonusRow label="🟦 Linhas completas" points="+2 cada" value={ps.fullRows} onDec={() => bonus(p.id, 'fullRows', -1)} onInc={() => bonus(p.id, 'fullRows', 1)} />
-                      <BonusRow label="🟥 Colunas completas" points="+7 cada" value={ps.fullCols} onDec={() => bonus(p.id, 'fullCols', -1)} onInc={() => bonus(p.id, 'fullCols', 1)} />
-                      <BonusRow label="🎨 Cores completas" points="+10 cada" value={ps.fullColors} onDec={() => bonus(p.id, 'fullColors', -1)} onInc={() => bonus(p.id, 'fullColors', 1)} />
+                      <BonusRow tile="blue" label="Linhas completas" points="+2 cada" value={ps.fullRows} onDec={() => bonus(p.id, 'fullRows', -1)} onInc={() => bonus(p.id, 'fullRows', 1)} />
+                      <BonusRow tile="red" label="Colunas completas" points="+7 cada" value={ps.fullCols} onDec={() => bonus(p.id, 'fullCols', -1)} onInc={() => bonus(p.id, 'fullCols', 1)} />
+                      <BonusRow tile="teal" label="Cores completas" points="+10 cada" value={ps.fullColors} onDec={() => bonus(p.id, 'fullColors', -1)} onInc={() => bonus(p.id, 'fullColors', 1)} />
                     </div>
                   </details>
                 </div>

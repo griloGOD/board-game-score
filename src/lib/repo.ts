@@ -7,8 +7,8 @@ import type { AzulAction } from '@/domain/azul/types';
 import { applyAzulAction, azulChampions, initialAzulState } from '@/domain/azul/scoring';
 import type { TtrAction } from '@/domain/ttr/types';
 import { applyTtrAction, initialTtrState, ttrChampions } from '@/domain/ttr/scoring';
-import type { TrioAction } from '@/domain/trio/types';
-import { applyTrioAction, hasTrioWon, initialTrioState, TRIO_DEFAULT_TARGET } from '@/domain/trio/scoring';
+import type { TrioAction, TrioState } from '@/domain/trio/types';
+import { applyTrioAction, initialTrioState, trioChampions, TRIO_DEFAULT_TARGET } from '@/domain/trio/scoring';
 
 export function newId(): string {
   return crypto.randomUUID();
@@ -30,9 +30,14 @@ export async function deletePlayer(id: string): Promise<void> {
 
 // ---- Partidas ----
 
-/** Só pode existir UMA partida em andamento (de qualquer jogo): apaga as abertas. */
-async function deleteOpenMatches(): Promise<void> {
-  const openIds = (await db.matches.where('status').equals('em_andamento').toArray()).map((m) => m.id);
+/**
+ * Cada jogo pode ter UMA partida em andamento (jogos diferentes convivem):
+ * criar uma nova de um jogo apaga só a aberta DELE.
+ */
+async function deleteOpenMatches(gameId: string): Promise<void> {
+  const openIds = (await db.matches.where('status').equals('em_andamento').toArray())
+    .filter((m) => m.gameId === gameId)
+    .map((m) => m.id);
   if (openIds.length) await db.matches.bulkDelete(openIds);
 }
 
@@ -54,14 +59,14 @@ function newMatchRecord(gameId: string, players: Player[], targetScore: number):
 }
 
 export async function createFlip7Match(players: Player[], targetScore = 200): Promise<string> {
-  await deleteOpenMatches();
+  await deleteOpenMatches('flip7');
   const record = newMatchRecord('flip7', players, targetScore);
   await db.matches.add(record);
   return record.id;
 }
 
 export async function createCatanMatch(players: Player[], targetScore = 10): Promise<string> {
-  await deleteOpenMatches();
+  await deleteOpenMatches('catan');
   const record: MatchRecord = {
     ...newMatchRecord('catan', players, targetScore),
     catanState: initialCatanState(players.map((p) => p.id)),
@@ -72,7 +77,7 @@ export async function createCatanMatch(players: Player[], targetScore = 10): Pro
 
 // Azul e Ticket to Ride não têm meta numérica (o fim é declarado); o alvo fica 0.
 export async function createAzulMatch(players: Player[]): Promise<string> {
-  await deleteOpenMatches();
+  await deleteOpenMatches('azul');
   const record: MatchRecord = {
     ...newMatchRecord('azul', players, 0),
     azulState: initialAzulState(players.map((p) => p.id)),
@@ -82,7 +87,7 @@ export async function createAzulMatch(players: Player[]): Promise<string> {
 }
 
 export async function createTtrMatch(players: Player[]): Promise<string> {
-  await deleteOpenMatches();
+  await deleteOpenMatches('ticket-to-ride');
   const record: MatchRecord = {
     ...newMatchRecord('ticket-to-ride', players, 0),
     ttrState: initialTtrState(players.map((p) => p.id)),
@@ -92,7 +97,7 @@ export async function createTtrMatch(players: Player[]): Promise<string> {
 }
 
 export async function createTrioMatch(players: Player[], targetScore = TRIO_DEFAULT_TARGET): Promise<string> {
-  await deleteOpenMatches();
+  await deleteOpenMatches('trio');
   const record: MatchRecord = {
     ...newMatchRecord('trio', players, targetScore),
     trioState: initialTrioState(players.map((p) => p.id)),
@@ -136,10 +141,10 @@ export function toFlip7Match(record: MatchRecord): Flip7Match {
   };
 }
 
-/** A partida em andamento mais recente, de qualquer jogo (botão "Continuar"). */
-export async function getActiveMatch(): Promise<MatchRecord | undefined> {
+/** Partidas em andamento (uma por jogo), da mais recente para a mais antiga. */
+export async function listOpenMatches(): Promise<MatchRecord[]> {
   const inProgress = await db.matches.where('status').equals('em_andamento').toArray();
-  return inProgress.sort((a, b) => b.updatedAt - a.updatedAt)[0];
+  return inProgress.sort((a, b) => b.updatedAt - a.updatedAt);
 }
 
 // ---- Catan ----
@@ -222,22 +227,47 @@ export async function finishTtrByHighest(matchId: string): Promise<void> {
 // ---- Trio ----
 
 /**
- * Aplica uma ação do Trio e ENCERRA na hora se o jogador venceu (3 trios ou o
- * trio de 7) — a vitória é automática, como no Flip 7.
+ * Aplica uma ação do Trio. Quando um trio fecha a rodada (meta ou trio de 7),
+ * o motor soma 1 ponto ao vencedor e zera os trios de todos — a partida segue
+ * até ser encerrada (`finishTrioByHighest`). Devolve quem pontuou (para a tela
+ * celebrar) e o estado anterior (para desfazer um toque errado).
  */
-export async function applyTrioMatchAction(matchId: string, playerId: string, action: TrioAction): Promise<void> {
+export async function applyTrioMatchAction(
+  matchId: string,
+  playerId: string,
+  action: TrioAction,
+): Promise<{ roundWinnerId?: string; before?: TrioState }> {
+  let result: { roundWinnerId?: string; before?: TrioState } = {};
   await db.transaction('rw', db.matches, async () => {
     const m = await db.matches.get(matchId);
     if (!m || m.gameId !== 'trio' || m.status !== 'em_andamento') return;
-    const state = applyTrioAction(m.trioState ?? initialTrioState(m.playerIds), playerId, action);
+    const before = m.trioState ?? initialTrioState(m.playerIds);
     const target = m.targetScore || TRIO_DEFAULT_TARGET;
-    const won = hasTrioWon(state[playerId], target);
-    await db.matches.put({
-      ...m,
-      trioState: state,
-      status: won ? 'finalizada' : 'em_andamento',
-      championIds: won ? [playerId] : [],
-      updatedAt: Date.now(),
-    });
+    const { state, roundWinnerId } = applyTrioAction(before, playerId, action, target);
+    result = { roundWinnerId, before };
+    await db.matches.put({ ...m, trioState: state, updatedAt: Date.now() });
+  });
+  return result;
+}
+
+/** Restaura um estado anterior do Trio (desfazer um "fechou a rodada" errado). */
+export async function restoreTrioState(matchId: string, state: TrioState): Promise<void> {
+  await db.transaction('rw', db.matches, async () => {
+    const m = await db.matches.get(matchId);
+    if (!m || m.gameId !== 'trio' || m.status !== 'em_andamento') return;
+    await db.matches.put({ ...m, trioState: state, updatedAt: Date.now() });
+  });
+}
+
+/** Encerra o Trio: campeão(ões) por mais pontos (rodadas vencidas). */
+export async function finishTrioByHighest(matchId: string): Promise<void> {
+  const m = await db.matches.get(matchId);
+  if (!m) return;
+  const state = m.trioState ?? initialTrioState(m.playerIds);
+  await db.matches.put({
+    ...m,
+    status: 'finalizada',
+    championIds: trioChampions(m.playerIds, state),
+    updatedAt: Date.now(),
   });
 }

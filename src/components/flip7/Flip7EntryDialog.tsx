@@ -166,8 +166,10 @@ export function Flip7EntryDialog({ playerName, initial, onCancel, onConfirm }: P
                   <div className="mb-1.5 text-[11px] font-semibold text-muted">Total da rodada</div>
                   <input
                     type="number"
+                    inputMode="numeric"
                     min={0}
                     value={manualTotal}
+                    onFocus={(e) => e.target.select()}
                     onChange={(e) => setManualTotal(Math.max(0, Number(e.target.value) || 0))}
                     className="w-full rounded-xl border border-border bg-bg px-3 py-2.5 text-ink outline-none focus:border-primary"
                     autoFocus

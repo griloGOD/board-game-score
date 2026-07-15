@@ -232,8 +232,10 @@ export function MatchSetup({ game, defaultTarget, targetLabel, targetHint, onCre
           <h2 className="mb-1.5 text-xs font-bold uppercase tracking-wider text-muted">{targetLabel}</h2>
           <input
             type="number"
+            inputMode="numeric"
             value={target}
             min={1}
+            onFocus={(e) => e.target.select()}
             onChange={(e) => setTarget(Math.max(1, Number(e.target.value) || 0))}
             className="w-28 rounded-xl border border-border bg-bg px-3 py-2.5 text-ink outline-none focus:border-primary"
           />
